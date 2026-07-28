@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Summit Johannesburg 2026 — Session Explorer</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --surface-1:      #fcfcfb;
+  --page:           #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --grid:           #e1e0d9;
+  --axis:           #c3c2b7;
+  --border:         rgba(11,11,11,0.10);
+  --series-1:       #2a78d6;
+  --series-2:       #eb6834;
+  --ord-100:        #86b6ef;
+  --ord-200:        #5598e7;
+  --ord-300:        #2a78d6;
+  --ord-400:        #184f95;
+  --critical:       #d03b3b;
+  --good:           #0ca30c;
+  --chip-bg:        #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --axis:           #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --ord-100:        #184f95;
+    --ord-200:        #256abf;
+    --ord-300:        #6da7ec;
+    --ord-400:        #b7d3f6;
+    --critical:       #e66767;
+    --good:           #0ca30c;
+    --chip-bg:        #242422;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface-1:      #1a1a19;
+  --page:           #0d0d0d;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted:     #898781;
+  --grid:           #2c2c2a;
+  --axis:           #383835;
+  --border:         rgba(255,255,255,0.10);
+  --series-1:       #3987e5;
+  --series-2:       #d95926;
+  --ord-100:        #184f95;
+  --ord-200:        #256abf;
+  --ord-300:        #6da7ec;
+  --ord-400:        #b7d3f6;
+  --critical:       #e66767;
+  --good:           #0ca30c;
+  --chip-bg:        #242422;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 20px 24px 64px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+h1 { font-size: 22px; margin: 0 0 2px; }
+h2 { font-size: 15px; margin: 0 0 12px; color: var(--text-primary); }
+.subtitle { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 20px; }
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat-tile { padding: 14px 16px; }
+.stat-value { font-size: 26px; font-weight: 600; line-height: 1.1; }
+.stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+}
+.filter-row input, .filter-row select {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+}
+.filter-row input[type="text"] { flex: 1 1 200px; min-width: 160px; }
+.filter-count { font-size: 12.5px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+.filter-reset {
+  font-size: 12.5px; color: var(--series-1); background: none; border: none; cursor: pointer; padding: 4px 6px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media (max-width: 720px) { .charts-grid { grid-template-columns: 1fr; } }
+
+.chart-head { display: flex; align-items: baseline; justify-content: space-between; }
+.table-toggle {
+  font-size: 11.5px; color: var(--text-secondary); background: none; border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 7px; cursor: pointer;
+}
+.table-toggle:hover { color: var(--text-primary); }
+
+.hbar-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+.hbar-label { flex: 0 0 150px; font-size: 12px; color: var(--text-secondary); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hbar-track { flex: 1; position: relative; height: 14px; }
+.hbar-fill { position: absolute; top: 3px; height: 8px; border-radius: 4px; }
+.hbar-value { font-size: 11.5px; color: var(--text-muted); flex: 0 0 22px; }
+
+.legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--text-secondary); margin-top: 8px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+table.mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.mini td, table.mini th { padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--grid); }
+table.mini th { color: var(--text-muted); font-weight: 500; }
+
+.section { margin-bottom: 20px; }
+
+.agenda-card { border-left: 3px solid var(--series-1); }
+.agenda-empty { color: var(--text-muted); font-size: 13px; }
+.agenda-item { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--grid); }
+.agenda-item:last-child { border-bottom: none; }
+.agenda-time { font-variant-numeric: tabular-nums; color: var(--text-secondary); flex: 0 0 50px; }
+.agenda-title { flex: 1; }
+.agenda-clash { color: var(--critical); font-size: 11.5px; font-weight: 600; }
+
+.timeline-slot { margin-bottom: 10px; }
+.timeline-time { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; font-variant-numeric: tabular-nums; }
+.timeline-count { font-weight: 400; color: var(--text-muted); }
+.session-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip {
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 12.5px;
+  max-width: 320px;
+}
+.chip-title { font-weight: 500; }
+.chip-meta { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+.star-btn { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; color: var(--text-muted); }
+.star-btn.starred { color: var(--ord-400); }
+
+.session-list { display: flex; flex-direction: column; gap: 6px; }
+.session-row { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface-1); }
+.session-row summary { cursor: pointer; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+.session-row summary::-webkit-details-marker { display: none; }
+.sr-time { flex: 0 0 46px; font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.sr-title { flex: 1; font-size: 13.5px; font-weight: 500; }
+.sr-code { color: var(--text-muted); font-weight: 400; }
+.badge { font-size: 10.5px; padding: 1px 6px; border-radius: 10px; color: #fff; white-space: nowrap; }
+.sr-detail { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--grid); font-size: 13px; color: var(--text-secondary); }
+.sr-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag { font-size: 10.5px; background: var(--chip-bg); border-radius: 8px; padding: 1px 7px; color: var(--text-secondary); }
+.sr-loc { color: var(--text-muted); font-size: 11.5px; margin-left: 4px; }
+a.cta { color: var(--series-1); font-size: 12px; }
+
+.insights-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 720px) { .insights-cols { grid-template-columns: 1fr; } }
+.insights-sub { margin-top: 12px; }
+.insights-sub:first-child { margin-top: 0; }
+.insights-subhead { font-size: 10.5px; font-weight: 600; color: var(--text-muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.fact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 12px;
+}
+.fact-tile { border-left: 3px solid var(--series-1); padding-left: 8px; }
+.fact-value { font-size: 16px; font-weight: 600; line-height: 1.2; }
+.fact-caption { font-size: 11px; color: var(--text-secondary); margin-top: 2px; line-height: 1.3; }
+
+.gauge-value { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.gauge-track { position: relative; height: 10px; border-radius: 5px; background: var(--chip-bg); overflow: hidden; margin: 0 0 6px; }
+.gauge-fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--series-1); transition: width 0.4s ease; }
+.gauge-caption { font-size: 11px; color: var(--text-secondary); }
+
+.cloud-wrap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; padding: 2px 0; }
+.cloud-word { line-height: 1; }
+
+.pairs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+.pair-card { background: var(--chip-bg); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; }
+.pair-terms { display: flex; gap: 5px; align-items: center; font-size: 11.5px; font-weight: 500; }
+.pair-terms span { color: var(--series-1); }
+.pair-terms span.meta { color: var(--text-muted); font-size: 10.5px; font-weight: 400; }
+.pair-connect { color: var(--text-secondary); }
+
+.topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.topicmap-svg-col { flex: 1 1 320px; min-width: 260px; }
+.topicmap-detail { flex: 1 1 220px; min-width: 200px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.topicmap-detail-empty { color: var(--text-muted); font-size: 12.5px; }
+.tm-current-title { font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 2px; }
+.tm-current-meta { color: var(--text-muted); font-size: 11.5px; margin-bottom: 10px; }
+.tm-label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+.tm-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.tm-tag { font-size: 10.5px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 2px 7px; color: var(--text-secondary); }
+.tm-neighbor { padding: 5px 0; border-top: 1px solid var(--grid); }
+.tm-neighbor-title { font-size: 12.5px; color: var(--text-primary); }
+.tm-neighbor-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.tab-btn {
+  background: none; border: none; font: inherit; font-size: 13.5px; padding: 8px 4px 9px;
+  color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab-btn.active { color: var(--text-primary); border-bottom-color: var(--series-1); font-weight: 600; }
+
+.level-100 { border-left: 3px solid var(--ord-100); }
+.level-200 { border-left: 3px solid var(--ord-200); }
+.level-300 { border-left: 3px solid var(--ord-300); }
+.level-400 { border-left: 3px solid var(--ord-400); }
+</style>
+</head>
+<body>
+<div class="viz-root" id="root">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+    <div>
+      <h1>AWS Summit Johannesburg 2026 — Session Explorer</h1>
+      <p class="subtitle">17 July 2026 · Johannesburg Expo Centre, Nasrec · all times CAT (UTC+2)</p>
+    </div>
+    <button class="table-toggle" id="theme-toggle" style="flex:0 0 auto;">🌙 Dark</button>
+  </div>
+
+  <div class="stats-row" id="stats"></div>
+
+  <div class="section card">
+    <h2>The agenda, decoded <span style="font-weight:400;color:var(--text-muted)">— a few inferences pulled from all 93 sessions</span></h2>
+    <div class="insights-cols">
+      <div class="insights-col">
+        <div class="fact-grid" id="fun-facts"></div>
+        <div class="insights-sub">
+          <h3 class="insights-subhead">Agentic AI hype-o-meter</h3>
+          <div class="gauge-value" id="gauge-value"></div>
+          <div class="gauge-track"><div class="gauge-fill" id="gauge-fill"></div></div>
+          <div class="gauge-caption" id="gauge-caption"></div>
+        </div>
+      </div>
+      <div class="insights-col">
+        <div class="insights-sub">
+          <h3 class="insights-subhead">Buzzword cloud <span style="font-weight:400;text-transform:none;letter-spacing:normal">— most-repeated words</span></h3>
+          <div class="cloud-wrap" id="cloud"></div>
+        </div>
+        <div class="insights-sub">
+          <h3 class="insights-subhead">Emerging topics <span style="font-weight:400;text-transform:none;letter-spacing:normal">— less common but potent</span></h3>
+          <div class="pairs-grid" id="emerging"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
+    <div id="chart-topicmap"></div>
+  </div>
+
+  <div class="card filter-row">
+    <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
+    <select id="f-level"><option value="">All levels</option></select>
+    <select id="f-type"><option value="">All session types</option></select>
+    <select id="f-area"><option value="">All areas of interest</option></select>
+    <span class="filter-count" id="f-count"></span>
+    <button class="filter-reset" id="f-reset">Reset filters</button>
+  </div>
+
+  <div class="section card agenda-card">
+    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
+    <div id="agenda"></div>
+  </div>
+
+  <div class="section">
+    <div class="charts-grid">
+      <div class="card">
+        <div class="chart-head"><h2>Sessions by level</h2><button class="table-toggle" data-target="chart-level">Table</button></div>
+        <div id="chart-level"></div>
+      </div>
+      <div class="card">
+        <div class="chart-head"><h2>Sessions by format</h2><button class="table-toggle" data-target="chart-type">Table</button></div>
+        <div id="chart-type"></div>
+      </div>
+      <div class="card">
+        <div class="chart-head"><h2>Top areas of interest</h2><button class="table-toggle" data-target="chart-area">Table</button></div>
+        <div id="chart-area"></div>
+      </div>
+      <div class="card">
+        <div class="chart-head"><h2>Most-mentioned AWS products</h2><button class="table-toggle" data-target="chart-product">Table</button></div>
+        <div id="chart-product"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="list">All sessions <span id="sl-count" style="font-weight:400"></span></button>
+      <button class="tab-btn" data-tab="timeline">Schedule at a glance</button>
+    </div>
+    <div id="tab-list"><div class="session-list" id="session-list"></div></div>
+    <div id="tab-timeline" style="display:none"><div id="timeline"></div></div>
+  </div>
+</div>
+
+<script>
+const SESSIONS = [{"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#explore-the-agentic-capabilities-of-amazon-quick", "title": "Explore the Agentic Capabilities of Amazon Quick", "code": "TNC201", "type": "Lightning talk", "level": "200 – Intermediate", "time": "08:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "Freelance Trainer", "abstract": "In this breakout session, discover the latest features of Amazon Quick, a generative AI-powered business intelligence platform transforming organizational data workflows. Explore the newest capabilities including Quick Sight for interactive visualizations, Quick Flows for workflow creation, Quick Automate for intelligent automation, and Quick Research for comprehensive analysis. Learn how custom chat agents, knowledge spaces, and workplace extensions integrate seamlessly to enhance productivity through natural language interactions across your organization.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#aws-backup-insights-at-scale-with-amazon-quick", "title": "AWS Backup Insights at Scale with Amazon Quick", "code": "STG301", "type": "Chalk talk", "level": "300 – Advanced", "time": "09:00+00:00", "duration": "45 mins", "location": "Chalk Talks 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Managing AWS Backup across an organization generates vast operational data that often goes underutilized. This chalk talk explores how to transform organization-wide AWS Backup reports — stored as CSV files in Amazon S3 — into interactive visual dashboards using Amazon Quick. Attendees will learn how to configure AWS Backup Audit Manager reports, connect them to Quick via S3 manifests, and build dashboards that surface backup compliance status, job success rates, and storage consumption across resource types and accounts — turning raw backup telemetry into actionable insights that drive better governance and cost optimization.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect"], "areas": [], "topics": ["storage", "analytics"], "industries": [], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#blocks-101", "title": "Blocks 101", "code": "DEV202", "type": "Dev chat", "level": "200 – Intermediate", "time": "09:00+00:00", "duration": "30 mins", "location": "Developer Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "More information coming soon.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": [], "topics": [], "industries": [], "features": ["Community-led", "Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#cv-to-interview-navigating-tech-recruitment", "title": "CV to Interview: Navigating Tech Recruitment", "code": "STU206", "type": "Breakout session", "level": "200 – Intermediate", "time": "09:00+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "AWS", "abstract": "This session equips you with practical strategies and proven frameworks to navigate the tech recruitment process - from identifying the right opportunities, to landing the interview.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["cust-enblemnt"], "topics": ["industry"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#put-your-data-to-work-for-agentic-ai-with-aws-storage", "title": "Put your data to work for Agentic AI with AWS storage", "code": "STG202", "type": "Chalk talk", "level": "200 – Intermediate", "time": "09:00+00:00", "duration": "45 mins", "location": "Chalk Talks 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Agentic AI systems require storage delivering persistent memory, real-time decisions, and seamless multi-agent collaboration. AWS offers the most comprehensive storage portfolio to support these needs, including high-speed services like S3 Express One Zone, storage for compute intensive agent workflows using FSx for Lustre, scalable vector storage and query with S3 Vectors. With the new MCP Server for S3, agents can query context-rich data using natural language without complex code. Explore how to architect agentic AI with purpose-built AWS storage and integrations with Amazon Bedrock and OpenSearch Service, enabling intelligent agents to operate continuously while simplifying infrastructure and accelerating production deployment.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-eng", "engineer", "it-pro"], "areas": ["innovation", "gen-ai"], "topics": ["Artificial Intelligence", "storage"], "industries": [], "features": ["Discussion"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#your-student-status-is-worth-more-build-earn-on-builder-center", "title": "Your Student Status is Worth More, Build & Earn on Builder Center", "code": "STU104", "type": "Lightning talk", "level": "100 – Foundational", "time": "09:00+00:00", "duration": "15 mins", "location": "Student Builder Zone UpLink, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Learn how to unlock free rewards as a student on AWS Builder Center and get active to earn badges. This session includes a live demo of the sign-up process, walks through the badges you'll complete to earn rewards, and gives you a plan to work towards a free AWS Certification voucher.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["cust-enblemnt"], "topics": ["industry"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#recruitment-fireside-chat-an-intern-s-perspective", "title": "Recruitment Fireside Chat: An Intern's Perspective", "code": "STU103", "type": "Lightning talk", "level": "100 – Foundational", "time": "09:30+00:00", "duration": "15 mins", "location": "Student Builder Zone UpLink, Hall 2, Floor 0", "speakers": "", "abstract": "Hear from a successful intern/graduate as they share their journey; from navigating the recruitment process, to delivering a real project that enabled their team. They'll discuss what the project involved, how they tackled challenges, completed key deliverables, and what they learned along the way about the culture, collaboration, and growth opportunities available to them.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["cust-enblemnt"], "topics": ["industry"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#keynote", "title": "Keynote", "code": "KEY101", "type": "Breakout session", "level": "100 – Foundational", "time": "10:00+00:00", "duration": "90 mins", "location": "Keynote, Hall 5, Floor 0", "speakers": "", "abstract": "At AWS, we believe builders should have the freedom to invent anything. Today, AI agents are transforming what's possible. Join us to learn how AWS makes it easier than ever to build, deploy, and scale agents. Hear from customers achieving breakthroughs by migrating workloads to the cloud and integrating AI into their operations. Discover where agents are heading, and how AWS is removing every barrier between your imagination and reality", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": [], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#build-autonomous-ai-agents-the-agentic-football-cup-challenge", "title": "Build Autonomous AI Agents: The Agentic Football Cup Challenge", "code": "STU204", "type": "Workshop", "level": "200 – Intermediate", "time": "11:15+00:00", "duration": "105 mins", "location": "Student Builder Zone Workshop, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Build Autonomous AI Agents: The Agentic Football Cup Challenge", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#aspen-s-60-day-vmware-exit-with-aws-agentic-ai", "title": "Aspen's 60-Day VMware Exit with AWS Agentic AI", "code": "CMP201", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 4, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Aspen Pharmacare is one of Africa's largest pharmaceutical manufacturers and a global healthcare leader. Facing major licensing cost increases following Broadcom's acquisition of VMware, Aspen needed to act fast without compromising strict pharmaceutical regulatory frameworks. Learn how AWS and Deloitte helped Aspen migrate to Amazon EC2 in under two months using AWS Agentic AI solutions, including AWS Transform, to accelerate workload assessment, automate migration planning, and ensure regulatory adherence while delivering substantial cost savings.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-admin", "sys-architect"], "areas": ["innovation"], "topics": ["migrations"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#build-an-agentic-full-stack-tabletop-game-master-application", "title": "Build an agentic full-stack tabletop game master application", "code": "DEV304", "type": "Workshop", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "105 mins", "location": "Developer Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "We've run AI-powered tabletop game master sessions at conferences where audiences became the adventuring party. They loved it. Now learn to build the whole thing yourself. You'll start with a pre-built UI and mock data, then turn it into a full-stack application with real-time multiplayer and an AI game master that narrates encounters, controls enemies, and responds to players.\nYou'll build authentication, persistent game state, real-time sync, an agentic game master with memory, AI-generated actions, AI players, and storage for character portraits and map assets. By the end you'll have a running application with real-time combat, narrative, and dice rolls.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": [], "topics": [], "industries": [], "features": ["Laptop required", "Hands-on"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-autonomous-genai-at-scale-with-amazon-bedrock", "title": "Building autonomous GenAI at scale with Amazon Bedrock", "code": "AIM201", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 1, Hall 5, Floor 0", "speakers": "The Unlimited Child", "abstract": "Amazon Bedrock empowers organisations to rapidly prototype autonomous applications and agents, seamlessly scaling from proof-of-concept to production. In this session, hear from The Unlimited Child, a South African social enterprise that built a first-of-its-kind generative AI coaching app on Bedrock ‚Äî putting an expert in the pocket of 15,000 ECD practitioners across Africa. Learn how they scaled from MVP to production, delivering real-time guidance on early childhood development while lifting cognitive load from frontline workers.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["biz-app", "industry"], "industries": [], "features": ["Customer story", "Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#from-cloud-bills-to-business-value-unit-economics-for-a-gotyme", "title": "From Cloud Bills to Business Value: Unit Economics for a GoTyme", "code": "COP302", "type": "Breakout session", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 8, Ballroom B, Floor 0", "speakers": "AWS", "abstract": "In this session, discover how a leading financial services group moved beyond traditional FinOps to build a cost intelligence platform that maps cloud spend to real business outcomes. Learn how they measure cost-to-serve per transaction, per client, and per banking product — integrating platform costs, tooling costs, and efficiency ratios into a single view across multiple entities. We'll also cover how AWS Marketplace became their mechanism for standardised global procurement, and share practical lessons for anyone looking to connect cloud investment to unit economics at scale.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "it-exec", "biz-ex"], "areas": ["price-per", "biz-intel"], "topics": ["Artificial Intelligence", "cloud-ops"], "industries": ["financial"], "features": ["Customer story", "Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#from-zero-to-agent-with-kiro", "title": "From Zero to Agent with Kiro", "code": "AIM302", "type": "Workshop", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "135 mins", "location": "Workshop 3, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Kiro CLI gets more powerful once its agents, MCP servers, steering files, and skills are configured well, but doing that by hand is error-prone. In this hands-on workshop you'll use Config Control for Kiro, an interactive UI, to build and govern a multi-agent system: spin up agents, wire MCP servers and tools, author steering files and skills, and manage global versus project-level workspaces, with the editor and JSON in sync. To prove it works, you'll configure a set of agents that build and run a small playable arcade game, leaving you able to maintain multi-agent Kiro setups of your own.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#hassle-free-multicloud-connectivity-with-aws-interconnect-multicloud", "title": "Hassle-free multicloud connectivity with AWS Interconnect - Multicloud", "code": "CDN201", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 5, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Many organizations choose AWS as their primary cloud, building their core network, security, and operations around it—while still needing to connect to other Cloud Service Providers (CSPs). In this session, discover AWS Direct Connect Multicloud Connectivity, a new capability that lets you leverage AWS as your unified control point for cross-cloud connectivity. Learn to extend AWS Transit Gateway and AWS Cloud WAN across clouds using managed Direct Connect connections, without relying on third-party providers or physical presence in colocation facilities. We'll showcase reference architectures for multicloud inspection, shared services, and routing policy enforcement.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect"], "areas": ["global-infra", "nis"], "topics": ["network-cont-delivery"], "industries": ["financial", "manufacturing"], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#how-aws-ai-is-powering-education-for-4-million-students-in-brazil", "title": "How AWS AI Is Powering Education for 4 Million Students in Brazil", "code": "IND401", "type": "Chalk talk", "level": "400 – Expert", "time": "11:30+00:00", "duration": "45 mins", "location": "Chalk Talks 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Ready to explore prompting engineering at unprecedented scale? Discover how Brazil's Ministry of Education (MEC) leveraged AWS AI services to revolutionize education access for millions of students nationwide. This technical chalk talk reveals the strategies behind building and deploying an AI-powered educational platform from concept to national implementation. You will see advanced prompting engineering techniques, scalable AI frameworks, and proven methodologies for measuring and iterating prompts in production environments. Learn from one of the world's largest educational AI deployments and walk away with actionable strategies for scaling your own.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-scientist", "sys-architect"], "areas": [], "topics": ["Artificial Intelligence", "industry"], "industries": ["education"], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#how-aerobotics-grades-millions-of-fruit-with-computer-vision-on-aws", "title": "How Aerobotics Grades Millions of Fruit with Computer Vision on AWS", "code": "SEG201", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Software & Technology, Gallagher 1, Floor 0", "speakers": "AWS", "abstract": "Commercial fruit growers have long relied on manual sampling covering less than 1% of orchards, resulting in incomplete data that drives inefficient harvest planning, preventable waste, and unmeasured yield losses. This session explores how Aerobotics built an automated grading system on AWS combining drone surveys, in-field mobile tracking, and packshed intake grading to deliver full orchard visibility. In 2026 alone, Aerobotics' AWS infrastructure has processed 120 million fruit and 26 million trees across 29+ countries. Learn how the team operates at production scale at 99.9% uptime, enabling growers to make data-driven harvest and sales decisions.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-admin", "biz-ex", "it-pro"], "areas": ["innovation", "saas"], "topics": ["industry", "analytics", "serverless"], "industries": ["agriculture", "aerospace"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Elastic Container Service (Amazon ECS)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#inside-aws-building-whats-new-while-everything-changes", "title": "Inside AWS: Building whats new while everything changes", "code": "AIM101", "type": "Chalk talk", "level": "100 – Foundational", "time": "11:30+00:00", "duration": "60 mins", "location": "Chalk Talks 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "AI isn't just changing how we write code, it's transforming how we run businesses, build platforms, measure success, and make engineering decisions at scale. From inside AWS, where teams are actively shaping the cloud that powers modern AI, this session shares a real-world perspective on navigating rapid change: redefining productivity, making smart tool choices, and building the judgment needed to lead through ambiguity. This is an open/collaborative conversation with a live demo using Kiro to start you on your exploration journey.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "it-exec", "engineer"], "areas": ["gen-ai"], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#launch-your-cloud-career-ai-powered-job-search-personal-branding", "title": "Launch Your Cloud Career AI Powered Job Search & Personal Branding", "code": "STU205", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Ready to launch your cloud career? This session equips you with AI-powered strategies to accelerate your job search and build a compelling personal brand. You'll learn how to showcase your skills through AWS certifications (from AI Practitioner to Solutions Architect), use agentic AI tools like Kiro to streamline your job applications, and craft a personal brand that is accurate, coherent, compelling, and differentiated.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["gen-ai"], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#modernize-your-contact-center-agent-workspace-with-amazon-connect", "title": "Modernize your contact center agent workspace with Amazon Connect", "code": "BIZ301", "type": "Workshop", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "135 mins", "location": "Workshop 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Amazon Connect customers in South Africa are currently underutilizing their agent workspace. This will show customers how they can leverage the Agent workspace SDK to modernize and unlock the art of the possible.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": ["innovation"], "topics": ["architecture"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": ["Amazon Connect"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#multi-agent-ai-solution-with-amazon-aurora-bedrock-agentcore", "title": "Multi-Agent AI Solution with Amazon Aurora & Bedrock AgentCore", "code": "DAT401", "type": "Workshop", "level": "400 – Expert", "time": "11:30+00:00", "duration": "135 mins", "location": "Workshop 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Multi-agent collaboration unlocks new levels of reasoning, specialization, and task orchestration in generative AI systems. In this hands-on workshop, learn how to harness Model Context Protocol (MCP) with AWS agentic AI services and Amazon Aurora PostgreSQL-Compatible Edition to build a collaborative AI system. You’ll create specialized agents focused on data interaction use cases that demonstrate a variety of data retrieval, analysis, or decision-making tasks grounded in real-time data and context from Aurora. Build a working prototype that showcases how intelligent agents can collaborate to solve complex problems with grounded enterprise data. You must bring your laptop to participate.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "data-eng", "engineer"], "areas": [], "topics": ["databases", "Artificial Intelligence"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": ["Amazon Aurora", "Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#navigating-the-future-solutions-architecture-in-the-age-of-ai", "title": "Navigating the future: Solutions architecture in the age of AI", "code": "ARC302", "type": "Breakout session", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 7, Ballroom A, Floor 0", "speakers": "Standard Bank, AWS", "abstract": "Many organisations can experiment with AI—few can scale it. The difference lies in architecture. This session explores how the architect's role is evolving from system designer to orchestrator of production-grade AI solutions. Learn how architects bridge the gap between promising prototypes and enterprise reality—aligning use cases to business value, designing scalable patterns, embedding governance and ensuring operational excellence.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-scientist", "sys-architect"], "areas": [], "topics": ["architecture"], "industries": [], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#old-mutual-bank-launching-south-africa-s-newest-digital-bank-at-scale", "title": "Old Mutual Bank: Launching South Africa's Newest Digital Bank at Scale", "code": "IND101", "type": "Breakout session", "level": "100 – Foundational", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 6, Auditorium, Floor 0", "speakers": "Old Mutual Bank, AWS", "abstract": "In September 2025, Old Mutual launched OM Bank — a fully digital, cloud-native bank built on AWS via 10x Banking's platform. After a $135M+ investment and nearly a decade of development, OM Bank went live nationwide with a focus on affordability, simplicity, and scale.\nThe results were immediate: 140,000+ customers in just three months, peaking at 5,000 sign-ups per day, reaching 284,000+ customers by year-end. AWS's elastic infrastructure enabled OM Bank to absorb this rapid growth seamlessly — scaling on demand without compromising security or reliability. The bank is now targeting 2.5–3 million customers by FY2028.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "it-exec", "biz-ex"], "areas": ["innovation"], "topics": ["industry"], "industries": ["financial"], "features": ["Lecture-style"], "products": ["Amazon Elastic Compute Cloud (Amazon EC2)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#power-streaming-analytics-on-aws-with-ai-driven-insights", "title": "Power streaming analytics on AWS with AI-driven insights", "code": "ANT307", "type": "Builders' session", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "60 mins", "location": "Builders' Sessions, Hall 1, Floor -1", "speakers": "AWS", "abstract": "In this Builders' session, build modern streaming analytics with agentic AI to analyze events and extract patterns.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "engineer"], "areas": [], "topics": ["Artificial Intelligence", "analytics"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#recruitment-fireside-chat-what-makes-a-successful-intern-grad", "title": "Recruitment Fireside Chat: What Makes a Successful Intern & Grad", "code": "STU102", "type": "Lightning talk", "level": "100 – Foundational", "time": "11:30+00:00", "duration": "15 mins", "location": "Student Builder Zone UpLink, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Hear directly from a Software Development Manager on what sets high-performing interns and graduates apart; from demonstrating curiosity and ownership, to unblocking challenges by asking the right questions, engaging with your team, and making meaningful impact on real projects. \n\nLeave with a clear understanding of the skills, behaviours, and mindset you should display to make the most of your internship opportunity.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["cust-enblemnt"], "topics": ["industry"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#reimagine-business-intelligence-with-amazon-quick-sight", "title": "Reimagine business intelligence with Amazon Quick Sight", "code": "ANT201", "type": "Breakout session", "level": "200 – Intermediate", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 3, Hall 5, Floor 0", "speakers": "Cellulant, AWS", "abstract": "Enterprises are transforming with AI-powered BI from Quick Sight, turning scattered data into strategic action. Watch as we demonstrate how Quick Sight eliminates barriers to data-driven decision making using AI agents, allowing everyone to uncover critical insights and achieve better business outcomes. Hear from Cellulant as they share how they transformed their analytics capabilities with Quick Sight—helping users perform advanced data analysis and analyze both structured and unstructured data using AI. Discover how Cellulant is democratizing insights across their organization, analyzing massive high-velocity data sets efficiently, and achieving scalability, all without managing infrastructure.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-exec"], "areas": [], "topics": ["analytics"], "industries": [], "features": ["Lecture-style", "Customer story"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#secret-agent-ic-unicorn-gameday", "title": "Secret Agent(ic) Unicorn GameDay", "code": "DVT301", "type": "Gamified learning", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "120 mins", "location": "GameDay: Agentic AI, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Can your team build a production-ready AI agent before the clock runs out? Secret Agent(ic) Unicorn is a gamified, team-based challenge where you go hands-on with Amazon Bedrock AgentCore and the open-source Strands Agents SDK to design, build, and deploy autonomous agents that solve real business problems. No step-by-step guide, just a live sandbox, a scoreboard, and your team's ingenuity. You will wire up tools, reasoning, and guardrails, then watch your agents compete. Expect fast feedback, friendly competition, and practical patterns you can take straight back to production. Developers of all backgrounds welcome; bring curiosity, leave with agentic skills.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "engineer"], "areas": ["DevOps", "gen-ai"], "topics": ["Artificial Intelligence", "architecture"], "industries": [], "features": ["Hands-on"], "products": ["Amazon Bedrock", "AWS Lambda"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#streamline-ai-model-development-lifecycle-with-amazon-sagemaker-ai", "title": "Streamline AI model development lifecycle with Amazon SageMaker AI", "code": "AIM304", "type": "Breakout session", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "45 mins", "location": "Breakout 2, Hall 5, Floor 0", "speakers": "BMW, AWS", "abstract": "Discover how the BMW Group's Vision and Sound Analytics Service (VSAS) processes 1.3 million images and audio files daily across 16 production sites, turning 1.3 PB of data into AI-powered insights. Learn how SageMaker AI underpins computer vision models for predictive maintenance and rail-failure detection, and powers a self-service acoustic analytics model builder that lets users train custom noise-detection models for engine performance and in-cabin comfort. With SageMaker training instances cutting model training from days to hours and scalable inference at the core, BMW ZA dedicates 80–90% of resources to innovation.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-exec", "sys-architect", "data-eng"], "areas": ["global-infra", "social-impct", "Machine Learning"], "topics": ["Artificial Intelligence", "analytics"], "industries": ["manufacturing", "automotive"], "features": ["Customer story", "Lecture-style"], "products": ["Amazon SageMaker"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#using-tools-and-agents-in-generative-ai-applications", "title": "Using Tools and Agents in Generative AI applications", "code": "TNC301", "type": "Lightning talk", "level": "300 – Advanced", "time": "11:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "Join us for an engaging session on AI Agents and Tools in AWS, where we’ll explore how to build intelligent, autonomous systems using Amazon Bedrock and open-source frameworks. Learn about function calling, ReAct patterns, and AWS’s comprehensive agent platforms. We’ll dive into practical demonstrations using Strands and CrewAI, and discover how to leverage protocols like MCP and A2A for seamless tool integration and agent collaboration. Perfect for developers looking to create production-ready AI solutions.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#women-driving-africa-s-future-of-work-with-cloud-ai-automation", "title": "Women Driving Africa's Future of Work with Cloud, AI & Automation", "code": "WOC101", "type": "Breakout session", "level": "100 – Foundational", "time": "12:00+00:00", "duration": "45 mins", "location": "Women of the Cloud , Expo Restaurant, Floor -1", "speakers": "", "abstract": "Across Africa, women are reshaping how work gets done. Join this fireside chat with inspiring women leaders driving digital transformation through cloud, AI, and automation. Hear candid stories of the breakthroughs and challenges behind real innovation, discover how emerging technology is transforming organizations and communities, and take away practical insights for scaling change across the continent. This is a forward-looking conversation on building inclusive digital economies, growing tech talent, and shaping the future of work. Whether you're a leader, technologist, or aspiring changemaker, you'll leave inspired to drive transformation in your own world.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sales-mar", "advisor", "biz-ex"], "areas": ["inc-diversity"], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#repeat-your-student-status-is-worth-more-build-earn-on-builder", "title": "[REPEAT] Your Student Status is Worth More, Build & Earn on Builder", "code": "STU105", "type": "Lightning talk", "level": "100 – Foundational", "time": "12:00+00:00", "duration": "15 mins", "location": "Student Builder Zone UpLink, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Learn how to unlock free rewards as a student on AWS Builder Center and get active to earn badges. This session includes a live demo of the sign-up process, walks through the badges you'll complete to earn rewards, and gives you a plan to work towards a free AWS Certification voucher.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": ["cust-enblemnt"], "topics": ["industry"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#ai-driven-cost-optimization-and-resiliency-in-cloud-operations", "title": "AI-Driven Cost Optimization and Resiliency in Cloud Operations", "code": "COP304", "type": "Breakout session", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 5, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Healthcare systems demand uncompromising resiliency—downtime isn't an option when patient outcomes are at stake. Yet cost remains a constant constraint requiring transformation in how teams manage cloud spend. We share how Konvergenz Network Solutions, a Health Information Management System (HIMS) provider on AWS, moved from reactive monitoring to proactive, AI-assisted cost management while strengthening resiliency. The journey began with a tagging strategy bridging AWS resource tags and Kubernetes labels for accurate attribution. We activated AWS cost tooling and built SCAD dashboards for actionable chargeback views, then upskilled engineers to leverage Kiro and MCP servers to identify anomalies and execute right-sizing.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["cloud-sec", "engineer"], "areas": [], "topics": ["cloud-ops", "Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Elastic Compute Cloud (Amazon EC2)", "Amazon Relational Database Service (Amazon RDS)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#aws-security-agent-proactive-appsec-from-design-to-deployment", "title": "AWS Security Agent: Proactive AppSec From Design to Deployment", "code": "SEC303", "type": "Breakout session", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 4, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Application security teams face an impossible challenge: scale security expertise across growing application portfolios while maintaining development velocity. Traditional approaches force organizations to choose between speed and security. In this session, discover how AWS Security Agent transforms application security from reactive to proactive through AI-powered automation. Learn how this frontier agent conducts automated security reviews customized to your organizational requirements and delivers on-demand penetration testing tailored to your applications. Join us to see how you can scale security coverage and prevent vulnerabilities early in the development lifecycle while maintaining the speed of modern development.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro", "engineer", "sys-architect"], "areas": ["tdr", "app-security"], "topics": ["Artificial Intelligence", "security-compliance", "architecture"], "industries": ["retail-wholesale", "financial", "energy"], "features": ["Lecture-style"], "products": ["AWS Security Agent"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#accelerate-isv-development-with-kiro-s-spec-driven-ai-agents", "title": "Accelerate ISV development with Kiro's spec-driven AI agents", "code": "SEG302", "type": "Breakout session", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Software & Technology, Gallagher 1, Floor 0", "speakers": "Clickatell, AWS", "abstract": "ISVs building agentic AI platforms face the challenge of moving from idea to production without sacrificing engineering rigor. This session explores how Kiro, an agentic IDE, enables spec-driven development that helps teams delegate and automate complex tasks through intelligent agents. Attendees discover how Kiro's agents work alongside developers to solve hard engineering problems with confidence. Hear from Clickatell, a chat commerce ISV, on how they use Kiro to accelerate development of their agentic AI platform on AWS.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "sys-architect", "devops-eng"], "areas": [], "topics": [], "industries": [], "features": ["Lecture-style", "Customer story"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#agentic-ai-meets-responsible-ai-strategy-and-best-practices", "title": "Agentic AI Meets responsible AI: Strategy and best practices", "code": "AIM202", "type": "Breakout session", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 1, Hall 5, Floor 0", "speakers": "AWS", "abstract": "AI agents offer powerful capabilities and require thoughtful design to help manage risks. This session explores responsible agentic AI implementation with appropriate controls and governance. Understand some of the scientific frontiers that inform design considerations, including the language of AI agents, context management, agent interactions, and common sense reasoning. Learn approaches for human oversight, risk mitigation, evaluation methods, and control mechanisms to help align agent behaviors with organizational goals.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-ai-powered-troubleshooting-skills-for-cloud-support-engineers", "title": "Building AI-Powered Troubleshooting Skills for Cloud Support Engineers", "code": "COP303", "type": "Chalk talk", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Chalk Talks 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Cloud support engineers spend significant time navigating static SOPs and switching between diagnostic tools. This chalk talk explores how to build AI-powered troubleshooting skills using Kiro or Claude and MCP servers that transform traditional runbooks into interactive, context-aware agents. Through whiteboarding, we'll design skill architectures that integrate CloudWatch, Athena, and service-specific APIs into agentic workflows. Learn how to author SOPs that AI agents can execute, implement domain-specific troubleshooting patterns for complex services, and measure impact through resolution time and accuracy metrics. Bring your troubleshooting challenges for collaborative problem-solving.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "advisor", "data-scientist"], "areas": ["Automation"], "topics": ["cloud-ops", "analytics", "Artificial Intelligence"], "industries": [], "features": ["Discussion"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-on-aws-resilience-innovations-for-critical-success", "title": "Building on AWS resilience: Innovations for critical success", "code": "ARC201", "type": "Breakout session", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 7, Ballroom A, Floor 0", "speakers": "AWS", "abstract": "Essential services that power global economies and critical infrastructure demand exceptional resilience. Through nearly two decades of focused innovation, AWS has developed core engineering practices and operational approaches that power critical workloads worldwide. Explore how AWS's architectural innovations and organizational practices help customers build robust services that maintain resilience during severe disruptions. Learn how AWS's continued investment in resilience provides the foundation for delivering essential services across governments, economies, and critical infrastructure.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "biz-ex"], "areas": ["resilience", "global-infra"], "topics": ["architecture"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#exam-prep-aws-certified-solutions-architect-associate", "title": "Exam Prep: AWS Certified Solutions Architect - Associate", "code": "TNC203", "type": "Exam prep", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "Prepare for the AWS Certified Solutions Architect – Associate exam with this interactive study session. Review the AWS Certified Solutions Architect – Associate Official Practice Question Set, and get your questions answered by the subject matter expert leading the study session.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#how-bmw-za-is-using-serverless-for-option-take-rate-planning", "title": "How BMW ZA is using Serverless for Option Take Rate Planning", "code": "IND201", "type": "Breakout session", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 6, Auditorium, Floor 0", "speakers": "BMW, AWS", "abstract": "Explore how BMW ZA is using serverless services and machine learning to do Option Take Rate Planning. The application helps the company to save millions in revenue by accurately planning the take rate per cars per material price.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-scientist", "sys-architect"], "areas": ["Machine Learning", "Serverless"], "topics": ["serverless"], "industries": ["automotive", "manufacturing"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon SageMaker"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#how-standard-bank-built-an-ai-ready-data-foundation-across-africa", "title": "How Standard Bank built an AI-ready data foundation across Africa", "code": "ANT302", "type": "Breakout session", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 3, Hall 5, Floor 0", "speakers": "Standard Bank, AWS", "abstract": "Standard Bank Group, Africa's largest bank by assets, shares how they modernized their enterprise data platform on AWS. Learn how they implemented Amazon SageMaker Unified Studio to unify data cataloging, quality monitoring, and fine-grained access control across the organization. Discover the architectural patterns for operating a governed data mesh at scale. This session covers the migration decision framework, lessons learned in African markets, and how this foundation now powers their AI and ML initiatives.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-eng", "sys-architect", "data-scientist"], "areas": ["data-protection"], "topics": ["Artificial Intelligence", "analytics"], "industries": [], "features": ["Lecture-style"], "products": ["AWS Lake Formation", "Amazon SageMaker"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#prompt-battle-arena-score-your-ai-skills-live", "title": "Prompt Battle Arena: Score Your AI Skills Live", "code": "STU201", "type": "Breakout session", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Think prompting AI is just typing a question? Think again. In this high-energy, hands-on session, you'll learn that prompt engineering is a measurable skill, and then prove it in a live competition against your peers.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#sagemaker-mlflow-innovate-faster-with-no-infrastructure-management", "title": "SageMaker & MLflow: Innovate faster with no infrastructure management", "code": "AIM308", "type": "Breakout session", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 2, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Production LLM applications fail in ways pre-launch rubrics miss: dropped context, hallucinated citations, mistimed tool calls. Evaluation-Driven Development (EDD) treats eval as an operational practice, not an after-the-fact report. Using a conversational RAG agent on Amazon Bedrock and Amazon SageMaker AI managed MLflow 3.10, we walk through EDD end-to-end: define criteria, build datasets, iterate with evaluate(), monitor production with scheduled scorers, and feed failures back.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-scientist", "engineer", "data-eng"], "areas": ["gen-ai", "Machine Learning"], "topics": ["architecture", "Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock", "Amazon SageMaker"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#unlock-new-business-by-removing-data-silos-with-zero-copy", "title": "Unlock New Business by Removing Data Silos with Zero-Copy", "code": "MAM304", "type": "Chalk talk", "level": "300 – Advanced", "time": "12:30+00:00", "duration": "45 mins", "location": "Chalk Talks 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Enterprises need to unify fragmented data to accelerate launch of AI applications, where some data reside in their AWS environments and some in their accounts in SaaS platforms. Many leading ISVs are partnering with AWS to solve this challenge for their customers by building Zero-Copy data federation between their SaaS platforms and end customers. AWS data stores. Join us to explore how you can build such solutions leveraging lakehouse architecture of Amazon SageMaker, Amazon S3, AWS Glue, AWS Lake Formation, Amazon Redshift, and Apache Iceberg, while maintaining governance and real-time synchronization.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-eng", "engineer"], "areas": [], "topics": ["analytics"], "industries": [], "features": ["Discussion"], "products": ["AWS Glue", "AWS Lake Formation", "Amazon Redshift"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#what-s-new-with-amazon-s3", "title": "What's new with Amazon S3", "code": "STG201", "type": "Breakout session", "level": "200 – Intermediate", "time": "12:30+00:00", "duration": "45 mins", "location": "Breakout 8, Ballroom B, Floor 0", "speakers": "AWS", "abstract": "Amazon S3 continually delivers innovations to help you store, manage, analyze, and protect any amount of data for virtually any use case. Discover S3's latest breakthroughs, including S3 Tables enhancements offering fully managed Apache Iceberg support, S3 Vectors with native vector support at scale for AI applications, S3 Metadata for instant data discovery, and S3 Express One Zone's ultra-low latency performance. Learn how these innovations optimize different data types and workloads, boost performance, simplify operations, and lower costs for analytics, AI/ML, and high-performance computing. This session provides implementation strategies, live demonstrations, and practical insights to immediately optimize your data architecture.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "sys-architect", "it-pro"], "areas": ["gen-ai", "innovation"], "topics": ["storage", "Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-event-driven-architectures", "title": "Building Event-driven Architectures", "code": "ARC305", "type": "Builders' session", "level": "300 – Advanced", "time": "12:45+00:00", "duration": "60 mins", "location": "Builders' Sessions, Hall 1, Floor -1", "speakers": "AWS", "abstract": "In this Builders' session, learn event-driven design using SNS, SQS, Lambda, EventBridge for decoupled services.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "sys-architect"], "areas": ["Event-Driven Architecture", "Lambda-Based Applications", "Serverless"], "topics": ["serverless", "architecture"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": ["AWS Lambda"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#ai-native-from-africa-how-isvs-win-on-the-global-stage", "title": "AI-Native from Africa: How ISVs Win on the Global Stage", "code": "ISV201", "type": "Roundtable", "level": "200 – Intermediate", "time": "13:00+00:00", "duration": "45 mins", "location": "Women of the Cloud , Expo Restaurant, Floor -1", "speakers": "AWS", "abstract": "The global software industry is being reshaped by agentic AI. The AWS Software Company Competitiveness Index 2025, surveying 775 senior software leaders, shows that 79% of European ISVs report rising customer expectations around AI functionality and 71% cite AI integration as their top innovation priority. But what does this transformation look like from Africa? In this fireside chat, executives from four leading ISVs building from and for Africa while competing globally share how they are navigating the shift to AI-native software, turning regional realities into global competitive advantages", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["entrepreneur", "ven-cap", "biz-ex"], "areas": ["saas", "biz-intel"], "topics": ["industry", "Artificial Intelligence", "cloud-ops"], "industries": [], "features": ["Discussion"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#a-practitioner-s-guide-to-data-for-agentic-ai", "title": "A practitioner’s guide to data for agentic AI", "code": "ANT303", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 3, Hall 5, Floor 0", "speakers": "AWS", "abstract": "In this session, gain the skills needed to deploy end-to-end agentic AI applications using your most valuable data. This session focuses on data management using processes like Model Context Protocol (MCP) and Retrieval Augmented Generation (RAG), and provides concepts that apply to other methods of customizing agentic AI applications. Discover best practice architectures using AWS database services like Amazon Aurora and OpenSearch Service, along with analytical, data processing and streaming experiences found in SageMaker Unified Studio. Learn data lake, governance, and data quality concepts and how Amazon Bedrock AgentCore and Bedrock Knowledge Bases, and other features tie solution components together.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro", "sys-architect", "it-exec"], "areas": [], "topics": ["analytics", "databases"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Aurora", "Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#ai-and-creative-thinking-in-system-design-for-tech-student-startups", "title": "AI and Creative Thinking in System Design for Tech Student Startups", "code": "STU202", "type": "Breakout session", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "AWS", "abstract": "You have a great startup idea, but how do you turn it into a working system? This session shows tech students how to use AI as a creative thinking partner and a system design accelerator", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#accelerate-your-cloud-journey-with-aws-transform", "title": "Accelerate Your Cloud Journey with AWS Transform", "code": "TNC202", "type": "Lightning talk", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "Freelance Trainer", "abstract": "Embark on a faster, smoother cloud transformation with agentic AI and integrated solutions. This session reveals how AWS Transform accelerates your cloud journey, addressing migration and modernization challenges through intelligent automation. Through real-world examples, discover how to leverage this powerful integration to fast-track your cloud adoption and transformation efforts. With the specialized AI agents of AWS Transform, customers can migrate VMware workloads to Amazon EC2, modernize .NET applications to cross-platform .NET, and modernize IBM z/OS mainframe applications, delivering transformation projects up to 4x faster.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["cloud-ops"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#beyond-migration-absa-s-path-from-cloud-to-ai-value-realization", "title": "Beyond Migration: Absa's Path from Cloud to AI Value Realization", "code": "IND202", "type": "Breakout session", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 6, Auditorium, Floor 0", "speakers": "Absa, AWS", "abstract": "What happens after your teams are cloud-fluent? Absa answered by evolving its Cloud Guild into an AI skills engine. This session reveals how Absa layered generative AI, ML Ops, and automation upskilling onto existing migration and modernization competencies — scaling across every Line of Business. Learn how the programme connects technical fluency to quantifiable business benefits including reduced time-to-value for AI workloads, operational efficiency gains, and accelerated innovation in Africa's Absa banking group.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex", "it-exec"], "areas": ["wdv", "Training & Certification"], "topics": ["Artificial Intelligence"], "industries": ["financial"], "features": ["Customer story", "Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#beyond-saas-how-software-companies-thrive-in-the-autonomous-ai-era", "title": "Beyond SaaS: How software companies thrive in the Autonomous AI era", "code": "SEG303", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Software & Technology, Gallagher 1, Floor 0", "speakers": "AWS", "abstract": "In one week of February 2026, the software sector lost roughly a trillion dollars in market cap — not from a better competitor, but because autonomous agents began dissolving jobs traditionally done by SaaS vendors. This session offers software companies a new mental model for the agentic era and one diagnostic to run on their business. We'll explore six surfaces where coding agents now decide whether your product gets used, examine emerging business models for autonomous AI — including challenges around security, distribution, and monetization — and close with how the teams building all of this are starting to look.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["entrepreneur", "biz-ex", "it-exec"], "areas": ["biz-intel", "saas"], "topics": ["biz-app", "migrations", "industry"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#build-a-well-architected-foundation-for-scaling-genai-and-agentic-apps", "title": "Build a well-architected foundation for scaling GenAI and agentic apps", "code": "ARC304", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 7, Ballroom A, Floor 0", "speakers": "AWS", "abstract": "Generative AI and agentic applications promise business transformation, but moving from prototype to production at scale exposes gaps in architecture, security, and operations. In this session, learn how to apply Well-Architected principles to build a reliable foundation for GenAI and agentic workloads on AWS. We cover gateway design, orchestration, observability, guardrails, and cost governance using Amazon Bedrock, Amazon Bedrock AgentCore, and Strands Agents. Through real customer patterns, see how to avoid common pitfalls, standardize shared services across business units, and accelerate safe adoption. Leave with a reference architecture and checklist you can apply to your next GenAI initiative.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "data-scientist", "sys-architect"], "areas": ["gen-ai"], "topics": ["architecture", "app-integration"], "industries": ["energy", "manufacturing", "financial"], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-multi-tenant-rag-and-mcp-servers", "title": "Building Multi-Tenant RAG and MCP Servers", "code": "ARC301", "type": "Chalk talk", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Chalk Talks 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Multi-tenancy introduces unique challenges when integrating RAG and MCP servers into GenAI architectures. Tenant context directly influences how we reference resources that refine AI outputs. This chalk talk explores key design decisions: Should you deploy per-tenant RAG and MCP servers? How do you route requests to the right tenant resources? What are the implications for tenant onboarding and isolation? We’ll walk through practical patterns for representing and integrating these servers in a multi-tenant experience, addressing trade-offs between shared and dedicated infrastructure.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["advisor"], "areas": [], "topics": ["architecture"], "industries": [], "features": ["Discussion"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-a-resilient-digital-university-unisa-s-aws-transformation", "title": "Building a resilient Digital University: UNISA's AWS Transformation", "code": "COP201", "type": "Breakout session", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 5, Hall 5, Floor 0", "speakers": "AWS", "abstract": "When ICT system collapses threatened operations at Africa's largest open distance university, UNISA embarked on a bold digital transformation journey with AWS. Hear how the university is modernizing infrastructure to support 400,000+ students, achieving 35% IT cost savings through LMS optimization, and building disaster recovery capabilities that ensure uninterrupted learning. Learn the strategies for navigating complex stakeholder environments and constrained funding while delivering scalable, reliable cloud solutions.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-exec", "academic", "biz-ex"], "areas": ["Management & Governance", "resilience"], "topics": ["compute", "cloud-ops", "migrations"], "industries": ["education"], "features": ["Customer story", "Lecture-style"], "products": ["Amazon Aurora"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-an-ai-powered-database-proxy-for-real-time-query-optimization", "title": "Building an AI-powered database proxy for real-time query optimization", "code": "DAT304", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 8, Ballroom B, Floor 0", "speakers": "Capitec, AWS", "abstract": "Managing database security and performance across production workloads is complex — especially when sensitive data flows through every query. Capitec Bank built an intelligent database proxy that intercepts pgwire traffic to analyse, optimise, and govern SQL queries in real time using Amazon Bedrock. In this session, learn how Capitec uses LLM-powered query inspection with prepared statement caching and Valkey to deliver real-time PII detection, query optimisation, and A/B load balancing across Aurora PostgreSQL and Amazon Redshift. Discover how this architecture enables production-grade data governance without application changes — turning your database layer into an intelligent security boundary.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "it-pro", "sys-architect"], "areas": ["data-protection", "gen-ai"], "topics": ["architecture", "databases", "Artificial Intelligence"], "industries": [], "features": ["Customer story", "Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#connect-agents-tool-integration-access-with-agentcore", "title": "Connect Agents: Tool Integration & Access with AgentCore", "code": "AIM306", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 2, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Unlock AI agent potential with this advanced session on scaling tools using Amazon Bedrock AgentCore Gateway. Learn to build and manage secure, production-ready agent tool environments. We'll cover multi-tenant architecture, deployment strategies, and integration patterns for agentic tools. Explore zero-code MCP tool creation with intelligent tool discovery.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "it-pro", "biz-ex"], "areas": ["Machine Learning", "gen-ai"], "topics": ["Artificial Intelligence", "biz-app"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#create-your-own-role-playing-game-with-agentic-ai-using-strands-agents", "title": "Create your own role-playing game with Agentic AI using Strands Agents", "code": "STU301", "type": "Workshop", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "165 mins", "location": "Student Builder Zone Workshop, Hall 2, Floor 0", "speakers": "AWS", "abstract": "Come code a Dungeons and Dragons (DnD) AI Game Master that will be responsible for orchestrating multiple AI agents, each specialized in a particular task. We'll explore concepts such as agent tools, the MCP protocol (Model Context Protocol), A2A (agent to agent), and RAG (retrieval-augmented generation) to create agents and/or MCP servers that roll dice, verify DnD rules, and generate the story as it unfolds. Whether you're a role-playing game fan or not, there will be things to learn during this workshop.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#get-to-know-amazon-quick-your-new-agentic-teammate", "title": "Get to know Amazon Quick, your new agentic teammate", "code": "AIM204", "type": "Breakout session", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 1, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Most of us spend more time hunting for information than using it. Amazon Quick changes that. It reaches across all your company's data ‚ documents, databases, emails, Slack threads, dashboards, Jira tickets and lets you search it, ask questions, and take action, all from one place. Available across web, mobile, Slack, and Microsoft tools with multi-model intelligence, Quick delivers consumer-grade AI with enterprise-grade security and governance. No vendor lock-in, no siloed copilots. Just one AI teammate that works wherever you do.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro"], "areas": [], "topics": ["biz-app"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#inside-aws-ec2-failure-and-recovery-at-scale", "title": "Inside AWS EC2: Failure and recovery at scale", "code": "COP203", "type": "Chalk talk", "level": "200 – Intermediate", "time": "13:30+00:00", "duration": "45 mins", "location": "Chalk Talks 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Anyone who ships production code will, on a long enough timeline, become a connoisseur of failure. This is doubly true in complex systems at scale. From inside AWS, EC2 engineers from Cape Town will lead this session, sharing some of the real lessons learned at scale, realtime discovery of new failure modes (congestive collapse) in production and how we work toward recovery at pace to protect our customers.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "devops-eng", "sys-architect"], "areas": ["dis-res-rec", "DevOps"], "topics": ["architecture", "cloud-ops"], "industries": [], "features": ["Discussion"], "products": ["Amazon Elastic Compute Cloud (Amazon EC2)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#migrating-600k-rps-how-booking-com-modernized-accommodation-search", "title": "Migrating 600K RPS: How Booking.com modernized accommodation search", "code": "MAM302", "type": "Breakout session", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Breakout 4, Hall 5, Floor 0", "speakers": "AWS", "abstract": "What if your database instances only lived five days—and that saved $10M? Booking.com proved it at 600K requests per second. They migrated their real-time accommodation search engine from 648 on-premises servers to 350 shardless AWS instances, then ran a production experiment: replace io2 with gp3 by treating infrastructure as disposable—instances auto-rebuild from stream, no durable storage needed. Result: $10.3M/year saved, zero latency impact. They then benchmarked across compute platforms—AMD, Intel, and ARM—to maximize price-performance. Leave with a framework for combining ephemeral infrastructure, cost-efficient storage, and latest-gen compute to drive savings without sacrificing performance at scale.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "devops-eng", "sys-architect"], "areas": ["innovation"], "topics": ["compute", "architecture", "migrations"], "industries": ["travel"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Elastic Compute Cloud (Amazon EC2)", "Amazon Relational Database Service (Amazon RDS)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#use-agent-strategies-to-streamline-complex-business-tasks", "title": "Use agent strategies to streamline complex business tasks", "code": "DEV301", "type": "Dev chat", "level": "300 – Advanced", "time": "13:30+00:00", "duration": "45 mins", "location": "Developer Zone, Expo, Floor 0", "speakers": "AWS Heroes", "abstract": "Complex business tasks don't have to be manual. In this talk, we build a memory-powered, multi-agent financial advisor using the open-source Strands SDK complete with custom tools, multi-agent orchestration, and Amazon Bedrock Guardrails for responsible AI. Then we deploy it live to Amazon Bedrock AgentCore Runtime. Walk away with practical agent strategies you can apply immediately to automate and streamline complex workflows in your own business context no fluff, just working code.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": [], "topics": [], "industries": [], "features": ["Lecture-style", "Community-led"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-an-enterprise-agentic-ai-platform-on-amazon-bedrock-agentcore", "title": "Building an Enterprise Agentic AI Platform on Amazon Bedrock AgentCore", "code": "AIM301", "type": "Workshop", "level": "300 – Advanced", "time": "14:00+00:00", "duration": "135 mins", "location": "Workshop 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Without agentic AI governance, teams deploy MCP servers with no inventory, agents hardcode tool endpoints, and no unified identity or audit trail connects agents to tool invocations. In this workshop you build: an LLM Gateway for unified model access, an Amazon Bedrock AgentCore Registry to catalog MCP servers and A2A agent cards with group-based access control and scoped service accounts, and an Amazon Bedrock AgentCore Gateway that enforces content screening and logs every tool call.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-eng", "data-scientist", "engineer"], "areas": ["DevOps"], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#design-authentication-authorization-logic-for-agentic-ai-apps", "title": "Design authentication & authorization logic for Agentic AI apps", "code": "SEC304", "type": "Builders' session", "level": "300 – Advanced", "time": "14:00+00:00", "duration": "60 mins", "location": "Builders' Sessions, Hall 1, Floor -1", "speakers": "AWS", "abstract": "In this Builders' session, implement user and machine authentication with fine-grained authorization for AI agents using Strands SDK, AgentCore Identity, Cognito, and Verified Permissions.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "sys-architect"], "areas": ["app-security"], "topics": ["Artificial Intelligence", "security-compliance"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#modernize-net-apps-for-linux-using-aws-transform-and-kiro", "title": "Modernize .NET apps for Linux using AWS Transform and Kiro", "code": "AIM402", "type": "Workshop", "level": "400 – Expert", "time": "14:00+00:00", "duration": "135 mins", "location": "Workshop 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Still tied to .NET Framework on Windows Server? In this hands-on workshop you'll take a real .NET Framework 4.8 Web Forms application and modernize it to cross-platform .NET 10 - in a fraction of the usual time. You'll drive AWS Transform for .NET, an agentic-AI modernization service that automates the heavy lifting of code transformation, then use Kiro, an AI-powered IDE, to close the residual gaps and verify the result. Together they form an end-to-end modernization accelerator that takes you from a legacy Windows dependency to a Linux-ready application - with confidence in what ships.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "advisor", "engineer"], "areas": ["innovation"], "topics": ["Artificial Intelligence", "biz-app", "migrations"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#secret-agent-ic-unicorn-gameday-ft-dynatrace", "title": "Secret Agent(ic) Unicorn GameDay ft. Dynatrace", "code": "DVT302", "type": "Gamified learning", "level": "300 – Advanced", "time": "14:00+00:00", "duration": "120 mins", "location": "GameDay: Agentic AI, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Can your team build a production-ready AI agent before the clock runs out? Secret Agent(ic) Unicorn is a gamified, team-based challenge, going hands-on with Amazon Bedrock AgentCore and the open-source Strands Agents SDK to design, build, and deploy autonomous agents solving real business problems. No step-by-step guide, just a live sandbox, a scoreboard, and your team's ingenuity. You'll wire up tools, reasoning, and guardrails and watch your agents compete. Expect fast feedback, friendly competition, and practical patterns you can take straight back to production. All developer backgrounds welcome; bring curiosity, leave with agentic skills. Featuring integrated use cases with Dynatrace.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "engineer"], "areas": ["gen-ai", "DevOps"], "topics": ["Artificial Intelligence", "architecture"], "industries": [], "features": ["Hands-on"], "products": ["Amazon Bedrock", "AWS Lambda"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#troubleshooting-in-the-cloud-with-kiro-cli", "title": "Troubleshooting in the cloud with Kiro CLI", "code": "AIM303", "type": "Workshop", "level": "300 – Advanced", "time": "14:00+00:00", "duration": "135 mins", "location": "Workshop 3, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Learn how to troubleshoot large-scale AWS environments through an AI-first approach powered by Kiro CLI. We’ll begin with hands-on experience using Kiro CLI’s custom AI agents and Model Context Protocol (MCP) integration, demonstrating how AI transforms traditional problem-solving through contextual, automated diagnostics. The AI agents are also complemented with essential tools, including log and metrics analysis through Amazon CloudWatch, AWS Config, and AWS X-Ray. Choose your preferred domain- networking, containers, databases, or serverless/DevOps - and work on triaging real-world issues using Agentic AI and the best practices shared during the workshop. You must bring your laptop to participate.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["devops-eng"], "areas": [], "topics": ["Artificial Intelligence", "cloud-ops"], "industries": [], "features": ["Laptop required", "Hands-on"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#aws-networking-fundamentals-connect-secure-and-scale", "title": "AWS Networking Fundamentals: Connect, secure and scale", "code": "CDN202", "type": "Chalk talk", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Chalk Talks 1, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Dive into AWS networking foundations, starting with the fundamentals of Amazon VPC in a single Region. Learn essential skills for IPv4 and IPv6 selection, subnetting, routing, DNS, and security before scaling to global, multi-Region architectures. In this session, explore various VPC connectivity methods, hybrid network integration, and secure traffic management techniques. Discover how to implement private remote access for cloud resources and optimize service-to-service communication while building zero trust architectures. Whether new to AWS or wanting to expand networking building blocks, this session delivers practical insights into best practices and proven architecture patterns for establishing global connectivity.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect"], "areas": [], "topics": ["network-cont-delivery", "security-compliance", "architecture"], "industries": [], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#accelerate-data-migrations-to-aws-africa-s-largest-payment-migration", "title": "Accelerate Data Migrations to AWS: Africa's Largest Payment Migration", "code": "IND203", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 6, Auditorium, Floor 0", "speakers": "PayInc, AWS", "abstract": "Cloud Acceleration Migration Acceleration Program achieved Africa's most ambitious cloud transformation, migrating 100+ mission-critical workloads including EFT, Real-Time Clearing, and SADC RTGS to AWS in 16 months, 8 months ahead of schedule. The migration encompassed 1000+ cloud resources, 700+ servers, and a 150TB data warehouse transformed into a 20.6TB data lake (145% reduction). With 260+ stakeholders coordinated across eight domains, CMAP processed 184 billion transactions while maintaining zero security incidents and full regulatory compliance. This session demonstrates enterprise-scale migration excellence, achieving 40% infrastructure efficiency gains while positioning PayInc as Africa's continental leader in digital payments modernization through strategic cloud adoption.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex", "it-exec", "sys-architect"], "areas": ["innovation", "dis-res-rec"], "topics": ["migrations", "analytics", "compute"], "industries": ["financial"], "features": ["Customer story", "Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#agents-in-the-enterprise-best-practices-with-amazon-bedrock-agentcore", "title": "Agents in the enterprise: Best practices with Amazon Bedrock AgentCore", "code": "AIM305", "type": "Breakout session", "level": "300 – Advanced", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 1, Hall 5, Floor 0", "speakers": "Old Mutual, AWS", "abstract": "As organizations scale AI agent development, robust enterprise architecture patterns become essential. In this session, we explore how Amazon Bedrock AgentCore enables teams to build modular agentic systems using preferred frameworks while sharing tools through MCP gateways. Hear from Old Mutual, Africa's largest pan-African financial services group, on how they built Smart Coach ‚GenAI an agentic AI financial coach combining RAG over a curated knowledge base with tool use via Strands SDK to give customers personalised guidance on financial concepts, products, and portfolio goals.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro", "sys-architect", "it-exec"], "areas": ["gen-ai"], "topics": ["industry", "Artificial Intelligence"], "industries": ["financial"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#building-software-like-never-before-with-agentic-ai", "title": "Building software like never before with agentic AI", "code": "DVT201", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 7, Ballroom A, Floor 0", "speakers": "AWS", "abstract": "Discover the future of software development as we explore the transformative power of agents with Kiro’s spec-driven development in modernizing your entire software development lifecycle (SDLC). Agentic AI is impacting software development by automating tasks, improving efficiency, and enabling more autonomous workflows throughout the development lifecycle. It allows teams to go beyond simple code generation to handle project planning, designing, testing, documentation, building agents into workflows, and retiring technical debt. Join us to explore how these powerful capabilities work together to help organizations accelerate from prototype to production ready applications.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "devops-eng", "engineer"], "areas": ["gen-ai"], "topics": [], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#from-demo-to-deployment-solving-agentic-ai-s-toughest-challenges", "title": "From demo to deployment: solving agentic AI's toughest challenges", "code": "AIM203", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 2, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Most AI agent projects stall when moving from prototype to production. This session tackles the top challenges builders face when deploying agentic AI at scale. You'll learn how to answer the fundamental question of whether to build custom agents or leverage pre-built agents for DevOps, security, development, and business productivity use cases. Then you'll discover how to address the critical production challenges of reliability, observability, cost management, security, and evaluation. Drawing from real customer deployments and AWS's portfolio of agentic AI capabilities, you'll gain actionable approaches for building agents that don't just demo well but ship and scale.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": [], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#kiro-the-ai-teammate-that-doesn-t-break-prod", "title": "Kiro: The AI Teammate That Doesn’t Break Prod", "code": "DEV203", "type": "Dev chat", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Developer Zone, Expo, Floor 0", "speakers": "AWS User Groups", "abstract": "We’ve all seen shiny AI demos on new repos with perfect prompts. Everything works first time. No edge cases, no legacy code, no Friday deployments. That’s not real life.\nMost of us deal with systems that have history. Old code nobody wants to touch. Tests that mostly exist in spirit. Production that doesn’t like experimentation.\nI’ll show how I use Kiro as a working engineer, not a demo tool. We’ll cover messy code, useful tests, safe refactoring, and moving faster without breaking prod at 4:59pm on Friday.\nNo hype. Just practical lessons from someone who double-checks before merging.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": [], "topics": [], "industries": [], "features": ["Community-led", "Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#medzen-health-across-africa-on-aws", "title": "MedZen health across Africa on AWS", "code": "CMP303", "type": "Breakout session", "level": "300 – Advanced", "time": "14:30+00:00", "duration": "45 mins", "location": "Software & Technology, Gallagher 1, Floor 0", "speakers": "MylesTech Solutions LTD, AWS", "abstract": "Healthcare software companies must deliver virtual care and digital innovation while meeting strict compliance and data-protection rules across markets. In this session, discover how MylesTech built MedZen, an agentic healthcare compliance platform, to expand virtual care and digital health services across Africa. Learn how the team uses Amazon Bedrock AgentCore to automate compliance-heavy workflows, secure patient data, and scale to serve healthcare facilities in multiple countries. Explore the architecture and cost decisions behind that growth, and see how a software company turns compliance and education into a foundation for expansion.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["entrepreneur", "it-pro"], "areas": ["saas"], "topics": ["industry", "Artificial Intelligence"], "industries": ["healthcare"], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#new-horizons", "title": "New Horizons", "code": "SAP201", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 8, Ballroom B, Floor 0", "speakers": "", "abstract": "Our Cloud Journey, Lessons in Transformation, and What We Discovered Along the Way", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-exec", "advisor", "biz-ex"], "areas": ["biz-intel", "innovation"], "topics": ["industry", "architecture", "biz-app"], "industries": ["automotive", "energy", "manufacturing"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Elastic Compute Cloud (Amazon EC2)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#securing-agentic-ai-owasp-maestro-and-real-world-defense-strategies", "title": "Securing Agentic AI: OWASP, MAESTRO, and Real-World Defense Strategies", "code": "SEC301", "type": "Chalk talk", "level": "300 – Advanced", "time": "14:30+00:00", "duration": "45 mins", "location": "Chalk Talks 2, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Explore the latest in Agentic AI security with OWASP's updated Threats and Mitigations Guide and Agentic Security Initiative. We will also explore MAESTRO, a specialized threat modeling approach for AI systems, offering a layered methodology to identify and mitigate risks throughout the AI lifecycle. Through a real-world case study, we'll demonstrate security best practices for agentic AI, including robust governance, continuous monitoring, and least-privilege access. Learn how to confidently deploy autonomous AI agents while minimizing risks. Gain practical insights for building secure, trustworthy, and resilient agentic AI applications that can transform industries safely.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "cloud-sec", "sys-architect"], "areas": ["app-security", "nis"], "topics": ["security-compliance", "Artificial Intelligence"], "industries": [], "features": ["Discussion"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#sovereign-ai-on-aws-cloud-operations-from-zero-data-to-production", "title": "Sovereign AI on AWS: Cloud Operations from Zero Data to Production", "code": "COP202", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 5, Hall 5, Floor 0", "speakers": "Digital Umuganda, AWS", "abstract": "Rwanda's 14 million Kinyarwanda speakers were locked out of AI-powered services because no commercial system supported their language. The Ministry of ICT partnered with Digital Umuganda to build custom language models on AWS from near-zero training data. Community partners crowdsourced diverse datasets, and the team built four production models — an LLM, machine translation, speech recognition, and speech synthesis — on EC2 and S3 infrastructure. Deployed first to 58,000 Community Health Workers, diagnostic accuracy jumped from 8% to 71%. This session explores building AI where no training data exists and the government-startup-cloud partnership that made it possible.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex", "cloud-sec", "devops-eng"], "areas": [], "topics": ["architecture", "Artificial Intelligence", "cloud-ops"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock", "Amazon Elastic Compute Cloud (Amazon EC2)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#spending-smarter-on-analytics-from-framework-to-live-implementation", "title": "Spending Smarter on Analytics: From Framework to Live Implementation", "code": "ANT202", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 3, Hall 5, Floor 0", "speakers": "Discovery Group, AWS", "abstract": "In this session, Kennedy Masunda (AWS) and Theo Groenewald (Discovery Group) walk through the principles and AWS tooling for establishing cost governance across environments. Kennedy covers the framework: policies, automation levers, and native AWS controls that enforce spending discipline without slowing engineering teams. Theo then shares how his Data Management team at Discovery is applying these patterns to their AWS-based data lake. The approach they are following, what they're changing and how they are  measuring.  This is not a retrospective case study; it's a live implementation in progress, presented with the practical detail needed to replicate it.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro", "sys-architect", "engineer"], "areas": ["price-per"], "topics": ["analytics"], "industries": [], "features": ["Customer story", "Lecture-style"], "products": ["AWS Lake Formation"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#standard-bank-cloud-migration-journey", "title": "Standard Bank Cloud Migration Journey", "code": "MAM201", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Breakout 4, Hall 5, Floor 0", "speakers": "", "abstract": "Standard Bank demonstrates how Africa's largest bank is navigating cloud transformation at scale — addressing regulatory complexity, federated operations, and organisational change. A compelling blueprint for African enterprises pursuing their own migration journeys. Standard Bank targeted 70% of core applications to cloud within five years — encompassing ~2,840 applications across 10,185 servers, ~590 programme stakeholders, and complex multi-country regulatory requirements including Reserve Bank compliance", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "it-admin"], "areas": ["Management & Governance"], "topics": ["migrations"], "industries": [], "features": ["Lecture-style"], "products": ["AWS Control Tower"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#structured-approach-to-ai-coding-with-spec-driven-development-on-kiro", "title": "Structured Approach to AI coding with Spec-Driven Development on Kiro", "code": "TNC204", "type": "Lightning talk", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "This session demonstrates how Kiro brings discipline and clarity to AI-assisted software development, ensuring generated code aligns with intended functionality and architecture. Explore Kiro's innovative spec-driven development approach for AI coding. Learn how to leverage structured specifications as a single source of truth, contrasting with unstructured 'vibe coding'. Discover how Kiro uses AI to generate detailed requirements, design, and task documents, guiding AI agents in code creation. Experience a workflow that enhances collaboration, maintainability, and documentation accuracy.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#what-no-one-tells-you-when-you-start-your-cloud-journey", "title": "What No One Tells You When You Start Your Cloud Journey", "code": "STU203", "type": "Breakout session", "level": "200 – Intermediate", "time": "14:30+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "AWS", "abstract": "AI is the headline, but networking, storage, databases, and compute are the foundation. This session covers the cloud fundamentals every builder needs to actually ship real applications on AWS.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["compute", "network-cont-delivery", "databases"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#modernize-applications-with-amazon-bedrock-agentcore-strands-mcp", "title": "Modernize applications with Amazon Bedrock AgentCore, Strands, & MCP", "code": "DVT401", "type": "Builders' session", "level": "400 – Expert", "time": "15:15+00:00", "duration": "60 mins", "location": "Builders' Sessions, Hall 1, Floor -1", "speakers": "AWS", "abstract": "Architect and implement AI into existing apps via event-driven architectures, data pipelines for RAG, and MCP servers", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "sys-architect"], "areas": ["Machine Learning", "Event-Driven Architecture"], "topics": ["migrations", "Artificial Intelligence"], "industries": [], "features": ["Hands-on", "Laptop required"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#ai-powered-rds-aurora-mysql-postgresql-database-management", "title": "AI-Powered RDS/Aurora MySQL/PostgreSQL Database Management", "code": "DAT307", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 2, Hall 5, Floor 0", "speakers": "AWS", "abstract": "AI changed how we write code. Now it's changing how we manage databases. This session explores the full spectrum — from Aurora and RDS's native AI-driven tuning and diagnostics, to agentic coding tools that help DBAs write optimised queries, generate infrastructure-as-code, and build self-healing automation. Whether you run MySQL, PostgreSQL, or both, you'll see how AI assistants and agentic workflows are compressing hours of DBA toil into minutes of guided, intelligent action.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro"], "areas": [], "topics": ["databases"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Aurora", "Amazon Relational Database Service (Amazon RDS)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#aws-security-agent-for-autonomous-threat-response", "title": "AWS Security Agent for Autonomous Threat Response", "code": "DEV204", "type": "Dev chat", "level": "200 – Intermediate", "time": "15:30+00:00", "duration": "45 mins", "location": "Developer Zone, Expo, Floor 0", "speakers": "AWS Community Builders", "abstract": "Security teams are stuck in alert fatigue while threats move faster. Traditional tools just detect and alert, creating thousands of false positives that slow response times. AWS Security Agent changes this by investigating threats, validating vulnerabilities, and responding autonomously.\n\nThis session shows how to adopt AWS Security Agent in your security operations. You'll see its multi-agent architecture, learn to integrate it with existing workflows using Amazon Bedrock AgentCore, and implement proper security controls through IAM, Guardrails, and PrivateLink. We'll cover the Agentic AI Security Scoping Matrix for risk assessment and practical patterns for deploying autonomous security without creating new vulnerabilities.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer"], "areas": ["app-security"], "topics": ["security-compliance"], "industries": [], "features": ["Lecture-style", "Community-led"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#automate-any-business-process-using-amazon-quick", "title": "Automate any business process using Amazon Quick", "code": "IND204", "type": "Breakout session", "level": "200 – Intermediate", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 6, Auditorium, Floor 0", "speakers": "Kenya Airways, AWS", "abstract": "Discover how to automate any business process using Amazon Quick Flows and Amazon Quick Automate, empowering every user in your organization to safely leverage agentic AI. Learn from real-world success stories as companies like 3M, Kitsa, dLocal, and Propulse Labs use Amazon Quick Suite to save time and money while improving customer outcomes. Hear directly from Jabil as they share their automation success story leveraging Amazon Quick 's automation capabilities, key insights, and vision for scaling automation enterprise-wide. Walk away with practical insights for implementing agentic automations to transform how you and your teams work.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-exec", "biz-ex"], "areas": ["Automation", "gen-ai"], "topics": ["Artificial Intelligence"], "industries": ["aerospace", "automotive"], "features": ["Customer story", "Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#build-production-ai-agents-with-the-strands-agents-sdk-for-typescript", "title": "Build production AI agents with the Strands Agents SDK for TypeScript", "code": "AIM309", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 1, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Discover how to build enterprise-ready AI agents using the newly launched Strands Agents SDK for TypeScript. This session introduces developers to a simple model-driven framework for building agents that run on any cloud, support multiple LLM providers, and integrate with the tools you already have. Learn how TypeScript developers can now leverage the same production-ready agent framework that Python teams have been using, with full type safety and seamless integration into modern JavaScript ecosystems.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex", "engineer", "it-pro"], "areas": ["Machine Learning", "gen-ai"], "topics": ["biz-app", "Artificial Intelligence"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#data-processing-architectures-for-building-ai-solutions", "title": "Data Processing architectures for building AI solutions", "code": "ANT305", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 3, Hall 5, Floor 0", "speakers": "AWS", "abstract": "Prepare to revolutionize your data infrastructure for the AI era with Amazon EMR, AWS Glue, and Amazon Athena. This session guides you through leveraging these powerful AWS services to construct robust, scalable data architectures that empower AI solutions at scale. Gain insights into effective architectural strategies for data processing, optimizing for cost-efficiency and security. Explore frameworks that underpin successful AI-driven data initiatives, and learn field lessons on navigating modernization projects. Whether you're starting your modernization journey or refining current setups, this session offers practical strategies to fast-track your organization toward achieving excellence in AI-powered data management.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["data-scientist", "data-eng", "it-pro"], "areas": ["gen-ai", "innovation"], "topics": ["analytics"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#exam-prep-aws-certified-ai-practitioner", "title": "Exam Prep: AWS Certified AI Practitioner", "code": "TNC101", "type": "Exam prep", "level": "100 – Foundational", "time": "15:30+00:00", "duration": "45 mins", "location": "Training & Certification Zone, Expo, Floor 0", "speakers": "AWS", "abstract": "Prepare for the AWS Certified AI Practitioner exam with this study session. Review questions from the official practice question set. Ask questions of the subject matter expert leading the study session. Continue preparing for your exam with confidence following the four-step plan on AWS Skill Builder.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex"], "areas": [], "topics": ["Artificial Intelligence"], "industries": [], "features": ["Discussion"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#from-tech-debt-to-competitive-advantage-migrate-modernize-with-aws", "title": "From tech debt to competitive advantage: Migrate & modernize with AWS", "code": "MAM202", "type": "Breakout session", "level": "200 – Intermediate", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 4, Hall 5, Floor 0", "speakers": "", "abstract": "Your legacy applications and infrastructure don't have to be a liability. In this session, discover how leading enterprises are converting tech debt into modern cloud advantages that unlock AI capabilities, cut costs, and accelerate innovation.\n\nThe path to AI starts with migration and modernization. We'll walk through the complete transformation journey: infrastructure, applications, data, and AI-ready business outcomes. You'll see how new agentic AI automation is making migration and modernization faster, simpler, and more cost-effective. We'll explore proven pathways for your most critical workloads (Microsoft, VMware, SAP, and mainframe), backed by 20 years of AWS expertise.\"", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["biz-ex", "engineer", "advisor"], "areas": ["innovation"], "topics": ["migrations"], "industries": [], "features": ["Lecture-style"], "products": ["Amazon Bedrock"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#governance-that-enables-innovation-at-scale-feat-old-mutual", "title": "Governance that Enables Innovation at Scale feat. Old Mutual", "code": "COP301", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 5, Hall 5, Floor 0", "speakers": "Old Mutual Group, AWS", "abstract": "As enterprises scale their cloud presence, they need flexible, secure environments that adapt to evolving business needs. AWS Control Tower modernizes cloud governance, enabling faster innovation in a secure, resilient manner. Learn how Old Mutual, a pan-African financial services group, migrated to AWS Control Tower with zero downtime for critical workloads. They implemented compliance controls and integrated Account Factory for Terraform to automate provisioning, enhance agility, and strengthen security—allowing them to focus on improving lives and communities.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect"], "areas": [], "topics": ["migrations", "cloud-ops"], "industries": [], "features": ["Lecture-style", "Customer story"], "products": ["AWS Control Tower", "AWS Organizations", "AWS CloudFormation"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#how-peach-payments-built-a-scalable-payments-engine-on-aws", "title": "How Peach Payments built a scalable payments engine on AWS", "code": "CMP304", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Software & Technology, Gallagher 1, Floor 0", "speakers": "Peach Payments, AWS", "abstract": "ISVs building payment platforms must balance control over transaction routing with the ability to scale reliably across markets. This session dives into how Peach Payments architected their self-hosted deployment of Hyperswitch, an open-source payments orchestration engine on AWS. Explore the architecture decisions spanning compute, networking, and data layers that enabled Peach Payments to process growing transaction volumes across Africa, while maintaining low latency and high availability. Attendees walk away with practical patterns for deploying complex open-source platforms on AWS infrastructure.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["it-pro", "engineer"], "areas": ["saas", "global-infra", "DevOps"], "topics": ["architecture", "industry"], "industries": ["financial"], "features": ["Lecture-style", "Customer story"], "products": ["Amazon Elastic Container Service (Amazon ECS)"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#lambda-managed-instances-ec2-power-with-serverless-simplicity", "title": "Lambda Managed Instances: EC2 Power with Serverless Simplicity", "code": "CNS301", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 7, Ballroom A, Floor 0", "speakers": "AWS", "abstract": "AWS Lambda Managed Instances enables you to run Lambda functions on your choice of EC2 compute. With Lambda Managed Instances, you can optimize the performance and cost efficiency of your functions by utilizing specialized EC2 instance types and EC2 pricing benefits, while maintaining the familiar Serverless programming model and benefits like automatic patching and scaling. This session will provide an in-depth overview of how to get started with Lambda Managed Instances and a behind-the-scenes look at how Lambda manages and scales your instances to ensure a seamless serverless experience.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["sys-architect", "engineer"], "areas": ["Lambda-Based Applications"], "topics": ["serverless"], "industries": [], "features": ["Lecture-style"], "products": ["AWS Lambda"]}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#modernize-sql-server-net-together-with-aws-transform-s-new-ai-agent", "title": "Modernize SQL Server & .NET Together with AWS Transform's New AI Agent", "code": "DAT308", "type": "Breakout session", "level": "300 – Advanced", "time": "15:30+00:00", "duration": "45 mins", "location": "Breakout 8, Ballroom B, Floor 0", "speakers": "AWS", "abstract": "Want to cut your Microsoft licensing costs by up to 70% while modernizing SQL Server workloads? Join us to explore AWS Transform's groundbreaking new capability that automates end-to-end migration from SQL Server to Amazon Aurora PostgreSQL. Learn how this powerful solution converts your entire SQL Server stack - from schemas and stored procedures to embedded logic - while accelerating modernization timelines by up to 5x. In this session, we'll demonstrate how AWS Transform helps you achieve enhanced security, performance, and scalability through purpose-built AWS services, revolutionizing your database modernization journey.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["engineer", "it-pro", "sys-architect"], "areas": [], "topics": ["databases"], "industries": [], "features": ["Lecture-style"], "products": []}, {"id": "events-cards-interactive-summits-summit-johannesburg-2026-summit-johannesburg-2026-2026-07-17-2#why-get-aws-certified", "title": "Why Get AWS Certified?", "code": "STU101", "type": "Breakout session", "level": "100 – Foundational", "time": "15:30+00:00", "duration": "45 mins", "location": "Student Builder Zone Track, Hall 2, Floor 0", "speakers": "Freelance Trainer", "abstract": "You’ll learn about the advantages of getting AWS Certified. You’ll also learn about the various certifications offered by AWS and what the AWS Skills Centers and other AWS programs have available to help you prepare to take these certification exams.", "ctaLink": "https://pages.awscloud.com/aws-summit-johannesburg-2026-registration.html?trk&sc_channel", "roles": ["student"], "areas": [], "topics": ["architecture"], "industries": [], "features": ["Lecture-style"], "products": []}];
+
+const LEVEL_COLOR = { "100": "var(--ord-100)", "200": "var(--ord-200)", "300": "var(--ord-300)", "400": "var(--ord-400)" };
+const LEVEL_ORDER = ["100", "200", "300", "400"];
+
+function parseLevel(raw) {
+  if (!raw) return { code: "", label: "Unspecified" };
+  const parts = raw.split(/[–-]/);
+  return { code: parts[0].trim(), label: (parts[1] || "").trim() || raw.trim() };
+}
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  return h * 60 + m;
+}
+function durationMinutes(text) {
+  const m = /(\d+)/.exec(text || "");
+  return m ? parseInt(m[1], 10) : 0;
+}
+function fmtTime(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+const rows = SESSIONS.map(s => {
+  const lvl = parseLevel(s.level);
+  const start = toMinutes(s.time);
+  const dur = durationMinutes(s.duration);
+  return { ...s, levelCode: lvl.code, levelLabel: lvl.label, start, dur, end: start + dur, timeLabel: fmtTime(start) };
+});
+
+// ---- Fun facts, hype meter, buzzword cloud, emerging terms & clusters: computed once from the full unfiltered agenda ----
+const STOPWORDS = new Set(("this that with from your have will into their about across through these those where "
+  + "which while when what how session sessions aws amazon summit using learn learns learned discover discovers "
+  + "explore explores join joins attend during including between after before more most also such some many best "
+  + "real world need needs help build builds building built news teams team today future just like well take takes "
+  + "you your yours youll youre weve well were was were will would could should does doing dive dives look looks "
+  + "into onto over under only than then them they were work works working ways way part parts each every both "
+  + "share shares shared come comes gain gains hear hands full end come along right here there").split(/\s+/));
+
+function tokenize(text) {
+  return (text || "").toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/\s+/)
+    .filter(w => w.length > 3 && !STOPWORDS.has(w));
+}
+function titleCase(s) {
+  return s.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+function shortProduct(name) {
+  const m = /\(([^)]+)\)\s*$/.exec(name);
+  return m ? m[1] : name;
+}
+
+const AI_RE = /\b(ai|agent|agentic|genai|llm|bedrock)\b/i;
+function mentionsAI(r) {
+  return AI_RE.test(r.title) || AI_RE.test(r.abstract) || (r.areas || []).some(a => /gen-ai/i.test(a))
+    || (r.products || []).some(p => /bedrock|sagemaker|amazon q/i.test(p));
+}
+
+function renderFunFacts() {
+  const totalMin = rows.reduce((a, r) => a + r.dur, 0);
+  const aiCount = rows.filter(mentionsAI).length;
+  const slotCounts = countBy(rows, r => r.timeLabel);
+  const [busiestSlot, busiestN] = [...slotCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const typeCounts = countBy(rows, r => r.type);
+  const [rarestType, rarestN] = [...typeCounts.entries()].sort((a, b) => a[1] - b[1])[0];
+  const laptopCount = rows.filter(r => (r.features || []).some(f => /laptop/i.test(f))).length;
+  const mysteryCount = rows.filter(r => !r.speakers).length;
+
+  const facts = [
+    [`${totalMin >= 60 ? Math.floor(totalMin / 60) + "h " : ""}${totalMin % 60}m`,
+      "of content if you tried to attend every single session back to back — good luck with that."],
+    [`${busiestSlot} · ${busiestN} sessions`,
+      "the single busiest time slot of the day. Pick your battles."],
+    [`${rarestN} × ${rarestType}`,
+      "the rarest session format at the whole summit — blink and it's over."],
+    [`${laptopCount} sessions`,
+      "want you to bring a laptop. Charge it tonight, not at the one free power outlet."],
+    [`${mysteryCount} sessions`,
+      "don't name a speaker in the data — mystery presenters, or AWS keeping it a surprise."],
+    [`${uniqueSorted(rows.map(r => r.location)).length} venues`,
+      "in play across the day — floor plan open in another tab is not optional."],
+  ];
+  document.getElementById("fun-facts").innerHTML = facts.map(([v, c]) =>
+    `<div class="fact-tile"><div class="fact-value">${v}</div><div class="fact-caption">${c}</div></div>`
+  ).join("");
+
+  const pct = Math.round(aiCount / rows.length * 100);
+  document.getElementById("gauge-value").textContent = pct + "%";
+  document.getElementById("gauge-fill").style.width = pct + "%";
+  document.getElementById("gauge-caption").textContent =
+    `${aiCount} of ${rows.length} sessions mention AI, agents, or Bedrock by name — allergic to hype? that leaves ${rows.length - aiCount} sessions to hide in.`;
+}
+
+function renderCloud() {
+  const freq = new Map();
+  rows.forEach(r => tokenize(r.title + " " + r.abstract).forEach(w => freq.set(w, (freq.get(w) || 0) + 1)));
+  const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 28);
+  const maxF = top[0][1], minF = top[top.length - 1][1];
+  const scaled = top.map(([w, f], i) => ({
+    w, f, i,
+    size: 10.5 + (maxF === minF ? 4 : (f - minF) / (maxF - minF) * 14),
+  }));
+  // shuffle deterministically for an organic layout, seeded by word so it's stable across renders
+  scaled.sort((a, b) => (a.w.charCodeAt(0) + a.w.length) - (b.w.charCodeAt(0) + b.w.length));
+  document.getElementById("cloud").innerHTML = scaled.map(({ w, f, i, size }) => {
+    const emphasize = i < 3;
+    const color = emphasize ? "var(--series-1)" : "var(--text-secondary)";
+    const weight = emphasize ? 700 : 400;
+    return `<span class="cloud-word" style="font-size:${size.toFixed(0)}px;color:${color};font-weight:${weight}" title="${w}: ${f} mentions">${w}</span>`;
+  }).join("");
+}
+
+function renderEmerging() {
+  const freq = new Map();
+  rows.forEach(r => tokenize(r.title + " " + r.abstract).forEach(w => freq.set(w, (freq.get(w) || 0) + 1)));
+  const topWords = new Set([...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map(([w]) => w));
+
+  // Find words with 2–4 mentions, excluding top 32
+  const emerging = [...freq.entries()]
+    .filter(([w, f]) => !topWords.has(w) && f >= 2 && f <= 4)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([w, f]) => ({ w: titleCase(w), f }));
+
+  document.getElementById("emerging").innerHTML = emerging.map(({ w, f }) =>
+    `<div class="pair-card"><div class="pair-terms"><span>${w}</span><span class="meta">${f}×</span></div></div>`
+  ).join("");
+}
+
+// Topic map: a 2D PCA projection of each session's tag vector (areas + topics + products) —
+// a lightweight stand-in for a full semantic embedding, computed instantly with no dependencies.
+function buildTagVocab() {
+  const counts = countBy(rows, r => [...(r.areas || []), ...(r.topics || []), ...(r.products || []).map(shortProduct)]);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([t]) => t);
+}
+function sessionVector(r, vocab) {
+  const tags = new Set([...(r.areas || []), ...(r.topics || []), ...(r.products || []).map(shortProduct)]);
+  return vocab.map(t => (tags.has(t) ? 1 : 0));
+}
+function pca2(vectors) {
+  const n = vectors.length, d = vectors[0].length;
+  const mean = new Array(d).fill(0);
+  vectors.forEach(v => v.forEach((x, i) => { mean[i] += x; }));
+  for (let i = 0; i < d; i++) mean[i] /= n;
+  const centered = vectors.map(v => v.map((x, i) => x - mean[i]));
+
+  const cov = Array.from({ length: d }, () => new Array(d).fill(0));
+  centered.forEach(v => {
+    for (let i = 0; i < d; i++) {
+      if (!v[i]) continue;
+      for (let j = 0; j < d; j++) cov[i][j] += v[i] * v[j];
+    }
+  });
+  for (let i = 0; i < d; i++) for (let j = 0; j < d; j++) cov[i][j] /= n;
+
+  const matVec = (m, v) => m.map(row => row.reduce((s, x, i) => s + x * v[i], 0));
+  const norm = v => Math.sqrt(v.reduce((s, x) => s + x * x, 0)) || 1;
+  function topEigen(mat) {
+    let v = Array.from({ length: d }, (_, i) => (i % 2 === 0 ? 1 : -1));
+    for (let k = 0; k < 60; k++) {
+      v = matVec(mat, v);
+      const nrm = norm(v);
+      v = v.map(x => x / nrm);
+    }
+    const mv = matVec(mat, v);
+    const val = v.reduce((s, x, i) => s + x * mv[i], 0);
+    return { vec: v, val };
+  }
+  const e1 = topEigen(cov);
+  const cov2 = cov.map((row, i) => row.map((x, j) => x - e1.val * e1.vec[i] * e1.vec[j]));
+  const e2 = topEigen(cov2);
+
+  return centered.map(v => [
+    v.reduce((s, x, i) => s + x * e1.vec[i], 0),
+    v.reduce((s, x, i) => s + x * e2.vec[i], 0),
+  ]);
+}
+
+function renderTopicMap() {
+  const el = document.getElementById("chart-topicmap");
+  const vocab = buildTagVocab();
+  if (vocab.length < 2) { el.innerHTML = "<p style='color:var(--text-muted);font-size:13px'>Not enough tag data to map.</p>"; return; }
+  const vectors = rows.map(r => sessionVector(r, vocab));
+
+  if (chartState.topicmap === "table") {
+    const sims = [];
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        let shared = 0;
+        for (let k = 0; k < vocab.length; k++) if (vectors[i][k] && vectors[j][k]) shared++;
+        if (shared >= 3) sims.push([`${rows[i].title} ↔ ${rows[j].title}`, shared]);
+      }
+    }
+    sims.sort((a, b) => b[1] - a[1]);
+    el.innerHTML = tableTwin(sims.slice(0, 15), ["Session pair", "Shared tags"]);
+    return;
+  }
+
+  const coords = pca2(vectors);
+  const xs = coords.map(c => c[0]), ys = coords.map(c => c[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const W = 480, H = 280, PAD = 18;
+  const sx = x => PAD + (maxX === minX ? 0.5 : (x - minX) / (maxX - minX)) * (W - 2 * PAD);
+  const sy = y => PAD + (maxY === minY ? 0.5 : (y - minY) / (maxY - minY)) * (H - 2 * PAD);
+
+  const dots = rows.map((r, i) => {
+    const cx = sx(coords[i][0]).toFixed(1), cy = sy(coords[i][1]).toFixed(1);
+    const color = LEVEL_COLOR[r.levelCode] || "var(--text-muted)";
+    const title = `${r.title} (${r.code}) — Level ${r.levelCode || "unspecified"}`;
+    return `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" fill-opacity="0.85" stroke="var(--surface-1)" stroke-width="1.2"><title>${title}</title></circle>`;
+  }).join("");
+
+  const legend = LEVEL_ORDER.filter(c => rows.some(r => r.levelCode === c)).map(c =>
+    `<span class="legend-item"><span class="legend-swatch" style="background:${LEVEL_COLOR[c]}"></span>${c}</span>`
+  ).join("");
+
+  el.innerHTML = `
+    <div class="topicmap-wrap">
+      <div class="topicmap-svg-col">
+        <svg id="topicmap-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:520px;display:block;cursor:crosshair">${dots}</svg>
+        <div class="legend">${legend}</div>
+      </div>
+      <div class="topicmap-detail" id="topicmap-detail">
+        <div class="topicmap-detail-empty">Move the mouse over the map to see nearby sessions.</div>
+      </div>
+    </div>`;
+
+  const svgEl = document.getElementById("topicmap-svg");
+  const panel = document.getElementById("topicmap-detail");
+  let highlighted = -1;
+
+  function setHighlight(idx) {
+    if (highlighted >= 0 && svgEl.children[highlighted]) {
+      svgEl.children[highlighted].setAttribute("r", "5");
+      svgEl.children[highlighted].setAttribute("stroke-width", "1.2");
+    }
+    if (idx >= 0 && svgEl.children[idx]) {
+      svgEl.children[idx].setAttribute("r", "8");
+      svgEl.children[idx].setAttribute("stroke-width", "2");
+    }
+    highlighted = idx;
+  }
+
+  function showNeighbors(i) {
+    const target = rows[i];
+    const nearby = rows
+      .map((r, j) => (j === i ? null : { j, d2: (coords[j][0] - coords[i][0]) ** 2 + (coords[j][1] - coords[i][1]) ** 2 }))
+      .filter(Boolean)
+      .sort((a, b) => a.d2 - b.d2)
+      .slice(0, 6);
+
+    // What ties this cluster together: the hovered session's own tags, ranked by how many
+    // of its nearest neighbors also carry them.
+    const sharedTags = vocab
+      .map((t, k) => ({ t, k }))
+      .filter(({ k }) => vectors[i][k])
+      .map(({ t, k }) => ({ t, count: nearby.filter(({ j }) => vectors[j][k]).length }))
+      .filter(({ count }) => count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+
+    panel.innerHTML = `
+      <div class="tm-current-title">${target.title}</div>
+      <div class="tm-current-meta">${target.code} · ${target.timeLabel} · Level ${target.levelCode || "—"}</div>
+      ${sharedTags.length ? `
+        <div class="tm-label">Shared themes</div>
+        <div class="tm-tags">${sharedTags.map(({ t }) => `<span class="tm-tag">${t}</span>`).join("")}</div>
+      ` : ""}
+      <div class="tm-label">Nearby sessions</div>
+      ${nearby.map(({ j }) => `
+        <div class="tm-neighbor">
+          <div class="tm-neighbor-title">${rows[j].title}</div>
+          <div class="tm-neighbor-meta">${rows[j].code} · ${rows[j].timeLabel} · Level ${rows[j].levelCode || "—"}</div>
+        </div>`).join("")}`;
+  }
+
+  svgEl.addEventListener("mousemove", e => {
+    const rect = svgEl.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (W / rect.width);
+    const my = (e.clientY - rect.top) * (H / rect.height);
+    let best = -1, bestD = Infinity;
+    rows.forEach((r, i) => {
+      const dx = sx(coords[i][0]) - mx, dy = sy(coords[i][1]) - my;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    if (best === -1 || best === highlighted) return;
+    setHighlight(best);
+    showNeighbors(best);
+  });
+  svgEl.addEventListener("mouseleave", () => {
+    setHighlight(-1);
+    panel.innerHTML = `<div class="topicmap-detail-empty">Move the mouse over the map to see nearby sessions.</div>`;
+  });
+}
+
+renderFunFacts();
+renderCloud();
+renderEmerging();
+
+let STAR = new Set();
+try { STAR = new Set(JSON.parse(localStorage.getItem("jhb-summit-starred") || "[]")); } catch (e) {}
+function saveStars() { try { localStorage.setItem("jhb-summit-starred", JSON.stringify([...STAR])); } catch (e) {} }
+function toggleStar(id) { STAR.has(id) ? STAR.delete(id) : STAR.add(id); saveStars(); render(); }
+
+const state = { search: "", level: "", type: "", area: "" };
+
+function populateSelect(sel, values, current) {
+  const existing = sel.querySelector("option").outerHTML;
+  sel.innerHTML = existing;
+  values.forEach(v => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = v;
+    if (v === current) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function uniqueSorted(arr) { return [...new Set(arr)].sort(); }
+
+function countBy(list, fn) {
+  const m = new Map();
+  list.forEach(item => {
+    const v = fn(item);
+    const vals = Array.isArray(v) ? v : [v];
+    vals.forEach(x => { if (x) m.set(x, (m.get(x) || 0) + 1); });
+  });
+  return m;
+}
+
+function hbarChart(container, pairs, opts) {
+  opts = opts || {};
+  const max = Math.max(...pairs.map(p => p[1]), 1);
+  container.innerHTML = "";
+  pairs.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.className = "hbar-row";
+    const color = opts.colorFor ? opts.colorFor(label) : "var(--series-1)";
+    row.innerHTML = `
+      <div class="hbar-label" title="${label}">${label}</div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${(value / max * 100).toFixed(1)}%;background:${color}" title="${label}: ${value}"></div>
+      </div>
+      <div class="hbar-value">${value}</div>`;
+    container.appendChild(row);
+  });
+}
+
+function tableTwin(pairs, headers) {
+  const rowsHtml = pairs.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join("");
+  return `<table class="mini"><thead><tr><th>${headers[0]}</th><th>${headers[1]}</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+}
+
+const chartState = { level: "chart", type: "chart", area: "chart", product: "chart", topicmap: "chart" };
+
+function renderCharts(filtered) {
+  const byLevel = countBy(filtered, r => r.levelCode || "?");
+  const levelPairs = LEVEL_ORDER.filter(c => byLevel.has(c)).map(c => {
+    const label = (rows.find(r => r.levelCode === c) || {}).levelLabel || c;
+    return [c + " · " + label, byLevel.get(c)];
+  });
+  const levelEl = document.getElementById("chart-level");
+  if (chartState.level === "chart") {
+    hbarChart(levelEl, levelPairs, { colorFor: (label) => LEVEL_COLOR[label.split(" ")[0]] || "var(--series-1)" });
+  } else {
+    levelEl.innerHTML = tableTwin(levelPairs, ["Level", "Sessions"]);
+  }
+
+  const byType = countBy(filtered, r => r.type || "Unspecified");
+  const typePairs = [...byType.entries()].sort((a, b) => b[1] - a[1]);
+  const typeEl = document.getElementById("chart-type");
+  typeEl.innerHTML = "";
+  if (chartState.type === "chart") hbarChart(typeEl, typePairs);
+  else typeEl.innerHTML = tableTwin(typePairs, ["Format", "Sessions"]);
+
+  const byArea = countBy(filtered, r => r.areas);
+  const areaPairs = [...byArea.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const areaEl = document.getElementById("chart-area");
+  if (chartState.area === "chart") hbarChart(areaEl, areaPairs);
+  else areaEl.innerHTML = tableTwin(areaPairs, ["Area of interest", "Sessions"]);
+
+  const byProduct = countBy(filtered, r => r.products);
+  const productPairs = [...byProduct.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const productEl = document.getElementById("chart-product");
+  if (chartState.product === "chart") hbarChart(productEl, productPairs);
+  else productEl.innerHTML = tableTwin(productPairs, ["Product/service", "Mentions"]);
+}
+
+document.querySelectorAll(".table-toggle[data-target]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.target.replace("chart-", "");
+    chartState[key] = chartState[key] === "chart" ? "table" : "chart";
+    btn.textContent = chartState[key] === "chart" ? "Table" : "Chart";
+    render();
+  });
+});
+
+function renderStats(filtered) {
+  const workshops = filtered.filter(r => r.type === "Workshop").length;
+  const handsOn = filtered.filter(r => (r.features || []).some(f => /hands-on/i.test(f))).length;
+  const locations = uniqueSorted(filtered.map(r => r.location)).length;
+  const stats = [
+    [filtered.length, "Sessions"],
+    [workshops, "Workshops"],
+    [handsOn, "Hands-on sessions"],
+    [locations, "Venues in use"],
+    [STAR.size, "Starred by you"],
+  ];
+  document.getElementById("stats").innerHTML = stats.map(([v, l]) =>
+    `<div class="card stat-tile"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`
+  ).join("");
+}
+
+function renderAgenda() {
+  const starred = rows.filter(r => STAR.has(r.id)).sort((a, b) => a.start - b.start);
+  const el = document.getElementById("agenda");
+  if (!starred.length) {
+    el.innerHTML = `<div class="agenda-empty">No sessions starred yet — click ☆ next to any session in the schedule or list below.</div>`;
+    return;
+  }
+  el.innerHTML = starred.map((r, i) => {
+    const prev = starred[i - 1];
+    const clash = prev && r.start < prev.end;
+    return `<div class="agenda-item">
+      <span class="agenda-time">${r.timeLabel}</span>
+      <span class="agenda-title">${r.title} <span style="color:var(--text-muted)">${r.code}</span></span>
+      ${clash ? '<span class="agenda-clash">⚠ overlaps previous</span>' : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderTimeline(filtered) {
+  const bySlot = new Map();
+  filtered.forEach(r => {
+    if (!bySlot.has(r.timeLabel)) bySlot.set(r.timeLabel, []);
+    bySlot.get(r.timeLabel).push(r);
+  });
+  const slots = [...bySlot.keys()].sort();
+  document.getElementById("timeline").innerHTML = slots.map(slot => {
+    const items = bySlot.get(slot).sort((a, b) => a.title.localeCompare(b.title));
+    const chips = items.map(r => `
+      <div class="chip">
+        <button class="star-btn ${STAR.has(r.id) ? "starred" : ""}" data-star="${r.id}">${STAR.has(r.id) ? "★" : "☆"}</button>
+        <span class="chip-title">${r.title}</span>
+        <div class="chip-meta">${r.code} · ${r.type} · ${r.location.split(",")[0]}</div>
+      </div>`).join("");
+    return `<div class="timeline-slot">
+      <div class="timeline-time">${slot} <span class="timeline-count">— ${items.length} running</span></div>
+      <div class="session-chips">${chips}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderList(filtered) {
+  document.getElementById("sl-count").textContent = `(${filtered.length})`;
+  const sorted = [...filtered].sort((a, b) => a.start - b.start);
+  document.getElementById("session-list").innerHTML = sorted.map(r => `
+    <details class="session-row level-${r.levelCode || '?'}">
+      <summary>
+        <button class="star-btn ${STAR.has(r.id) ? "starred" : ""}" data-star="${r.id}">${STAR.has(r.id) ? "★" : "☆"}</button>
+        <span class="sr-time">${r.timeLabel}</span>
+        <span class="sr-title">${r.title} <span class="sr-code">${r.code}</span></span>
+        <span class="badge" style="background:${LEVEL_COLOR[r.levelCode] || "var(--text-muted)"}">${r.levelCode || "—"}</span>
+      </summary>
+      <div class="sr-detail">
+        <div>${r.type} · ${r.duration} · ${r.location}${r.speakers ? " · " + r.speakers : ""}</div>
+        <p>${r.abstract || ""}</p>
+        <div class="sr-tags">${(r.areas || []).map(a => `<span class="tag">${a}</span>`).join("")}${(r.products || []).slice(0, 6).map(p => `<span class="tag">${p}</span>`).join("")}</div>
+        ${r.ctaLink ? `<a class="cta" href="${r.ctaLink}" target="_blank" rel="noopener">Register / details ↗</a>` : ""}
+      </div>
+    </details>
+  `).join("");
+}
+
+function attachStarHandlers(root) {
+  root.querySelectorAll("[data-star]").forEach(btn => {
+    btn.addEventListener("click", (e) => { e.preventDefault(); toggleStar(btn.dataset.star); });
+  });
+}
+
+function applyFilters() {
+  const q = state.search.trim().toLowerCase();
+  return rows.filter(r => {
+    if (state.level && r.levelCode !== state.level) return false;
+    if (state.type && r.type !== state.type) return false;
+    if (state.area && !(r.areas || []).includes(state.area)) return false;
+    if (q) {
+      const hay = [
+        r.title, r.abstract, r.speakers, r.code, r.type, r.location, r.levelLabel,
+        ...(r.areas || []), ...(r.topics || []), ...(r.industries || []),
+        ...(r.features || []), ...(r.products || []), ...(r.roles || []),
+      ].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  const filtered = applyFilters();
+  document.getElementById("f-count").textContent = `${filtered.length} of ${rows.length} sessions`;
+  renderStats(filtered);
+  renderAgenda();
+  renderCharts(filtered);
+  renderTopicMap();
+  renderTimeline(filtered);
+  renderList(filtered);
+  attachStarHandlers(document.getElementById("root"));
+}
+
+populateSelect(document.getElementById("f-level"), LEVEL_ORDER.filter(c => rows.some(r => r.levelCode === c)));
+populateSelect(document.getElementById("f-type"), uniqueSorted(rows.map(r => r.type)));
+populateSelect(document.getElementById("f-area"), uniqueSorted(rows.flatMap(r => r.areas || [])));
+
+document.getElementById("f-search").addEventListener("input", e => { state.search = e.target.value; render(); });
+document.getElementById("f-level").addEventListener("change", e => { state.level = e.target.value; render(); });
+document.getElementById("f-type").addEventListener("change", e => { state.type = e.target.value; render(); });
+document.getElementById("f-area").addEventListener("change", e => { state.area = e.target.value; render(); });
+document.getElementById("f-reset").addEventListener("click", () => {
+  state.search = ""; state.level = ""; state.type = ""; state.area = "";
+  document.getElementById("f-search").value = "";
+  document.getElementById("f-level").value = "";
+  document.getElementById("f-type").value = "";
+  document.getElementById("f-area").value = "";
+  render();
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+    document.getElementById("tab-list").style.display = btn.dataset.tab === "list" ? "" : "none";
+    document.getElementById("tab-timeline").style.display = btn.dataset.tab === "timeline" ? "" : "none";
+  });
+});
+
+const THEME_KEY = "jhb-summit-theme";
+function effectiveTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function updateThemeBtn() {
+  document.getElementById("theme-toggle").textContent = effectiveTheme() === "dark" ? "☀️ Light" : "🌙 Dark";
+}
+(function initTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (stored === "light" || stored === "dark") document.documentElement.setAttribute("data-theme", stored);
+  updateThemeBtn();
+})();
+document.getElementById("theme-toggle").addEventListener("click", () => {
+  const next = effectiveTheme() === "dark" ? "light" : "dark";
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  document.documentElement.setAttribute("data-theme", next);
+  updateThemeBtn();
+});
+
+render();
+</script>
+</body>
+</html>
