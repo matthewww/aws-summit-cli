@@ -8,8 +8,16 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SRC = REPO_ROOT / "data" / "summit-johannesburg-2026" / "sessions.jsonl"
+DATA_DIR = REPO_ROOT / "data" / "summit-johannesburg-2026"
+SRC = DATA_DIR / "sessions.jsonl"
+EVENT_META = DATA_DIR / "event.json"
 OUT = REPO_ROOT / "docs" / "index.html"
+
+EVENT = json.loads(EVENT_META.read_text(encoding="utf-8")) if EVENT_META.exists() else {}
+EVENT_TITLE = EVENT.get("title", "AWS Summit Johannesburg") + " 2026"
+EVENT_DATE = EVENT.get("date", "date TBC")
+EVENT_VENUE = ", ".join(v for v in (EVENT.get("venue"), EVENT.get("location")) if v) or "venue TBC"
+EVENT_AGENDA_URL = EVENT.get("agenda_url", "https://aws.amazon.com/events/summits/johannesburg/")
 
 
 def ns_short(ns):
@@ -80,7 +88,7 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AWS Summit Johannesburg 2026 — Session Explorer</title>
+<title>__EVENT_TITLE__ — Session Explorer</title>
 <style>
 .viz-root {
   color-scheme: light;
@@ -328,8 +336,8 @@ a.cta { color: var(--series-1); font-size: 12px; }
 <div class="viz-root" id="root">
   <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
     <div>
-      <h1>AWS Summit Johannesburg 2026 — Session Explorer</h1>
-      <p class="subtitle">19 August 2026 · Johannesburg Expo Centre, Nasrec · all times CAT (UTC+2) · <a href="https://aws.amazon.com/events/summits/johannesburg/" target="_blank" rel="noopener" style="color:var(--series-1)">Official event page ↗</a></p>
+      <h1>__EVENT_TITLE__ — Session Explorer</h1>
+      <p class="subtitle">__EVENT_DATE__ · __EVENT_VENUE__ · all times CAT (UTC+2) · <a href="__EVENT_AGENDA_URL__" target="_blank" rel="noopener" style="color:var(--series-1)">Official event page ↗</a></p>
     </div>
     <button class="table-toggle" id="theme-toggle" style="flex:0 0 auto;">🌙 Dark</button>
   </div>
@@ -975,7 +983,12 @@ render();
 </html>
 """
 
-HTML = HTML.replace("__DATA_JSON__", DATA_JSON)
+HTML = (HTML
+    .replace("__DATA_JSON__", DATA_JSON)
+    .replace("__EVENT_TITLE__", EVENT_TITLE)
+    .replace("__EVENT_DATE__", EVENT_DATE)
+    .replace("__EVENT_VENUE__", EVENT_VENUE)
+    .replace("__EVENT_AGENDA_URL__", EVENT_AGENDA_URL))
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 with open(OUT, "w", encoding="utf-8") as f:

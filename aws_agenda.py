@@ -64,4 +64,13 @@ def fetch_sessions(event, out_path=None, on_progress=None):
             for item in data.get('items', []):
                 f.write(json.dumps(item) + '\n')
 
+    event_meta_path = os.path.join(os.path.dirname(out_path), "event.json")
+    with open(event_meta_path, 'w') as f:
+        json.dump({
+            'title': event['title'],
+            'date': event['date'],
+            'location': event['location'],
+            'agenda_url': event['agenda_url'],
+        }, f, indent=2)
+
     return total_hits, out_path
