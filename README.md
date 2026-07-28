@@ -1,5 +1,7 @@
 # aws-summit-cli
 
+**[Live: AWS Summit Johannesburg 2026 — Session Explorer](https://matthewww.github.io/aws-summit-cli/)**
+
 Interactive CLI to pick an AWS Summit and pull its agenda sessions as JSONL to coversationally browse with AI agents.
 
 ## Setup
