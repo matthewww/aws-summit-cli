@@ -313,6 +313,7 @@ a.cta { color: var(--series-1); font-size: 12px; }
 .pair-connect { color: var(--text-secondary); }
 
 #chart-topicmap { min-height: 450px; }
+.topicmap-table-scroll { max-height: 450px; overflow-y: auto; }
 .topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
 .topicmap-svg-col { flex: 1 1 420px; min-width: 320px; }
 .topicmap-detail { flex: 1 1 220px; min-width: 200px; min-height: 450px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
@@ -376,6 +377,25 @@ a.cta { color: var(--series-1); font-size: 12px; }
     </div>
   </div>
 
+  <div class="section card">
+    <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
+    <div id="chart-topicmap"></div>
+  </div>
+
+  <div class="card filter-row">
+    <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
+    <select id="f-level"><option value="">All levels</option></select>
+    <select id="f-type"><option value="">All session types</option></select>
+    <select id="f-area"><option value="">All areas of interest</option></select>
+    <span class="filter-count" id="f-count"></span>
+    <button class="filter-reset" id="f-reset">Reset filters</button>
+  </div>
+
+  <div class="section card agenda-card">
+    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
+    <div id="agenda"></div>
+  </div>
+
   <div class="section">
     <div class="charts-grid">
       <div class="card">
@@ -395,25 +415,6 @@ a.cta { color: var(--series-1); font-size: 12px; }
         <div id="chart-product"></div>
       </div>
     </div>
-  </div>
-
-  <div class="section card">
-    <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
-    <div id="chart-topicmap"></div>
-  </div>
-
-  <div class="card filter-row">
-    <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
-    <select id="f-level"><option value="">All levels</option></select>
-    <select id="f-type"><option value="">All session types</option></select>
-    <select id="f-area"><option value="">All areas of interest</option></select>
-    <span class="filter-count" id="f-count"></span>
-    <button class="filter-reset" id="f-reset">Reset filters</button>
-  </div>
-
-  <div class="section card agenda-card">
-    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
-    <div id="agenda"></div>
   </div>
 
   <div class="section card">
@@ -620,7 +621,7 @@ function renderTopicMap() {
       }
     }
     sims.sort((a, b) => b[1] - a[1]);
-    el.innerHTML = tableTwin(sims.slice(0, 15), ["Session pair", "Shared tags"]);
+    el.innerHTML = `<div class="topicmap-table-scroll">${tableTwin(sims.slice(0, 40), ["Session pair", "Shared tags"])}</div>`;
     return;
   }
 
