@@ -316,7 +316,7 @@ a.cta { color: var(--series-1); font-size: 12px; }
 .topicmap-table-scroll { max-height: 450px; overflow-y: auto; }
 .topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
 .topicmap-svg-col { flex: 1 1 420px; min-width: 320px; }
-.topicmap-detail { flex: 1 1 220px; min-width: 200px; min-height: 450px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.topicmap-detail { flex: 1 1 220px; min-width: 200px; height: 450px; overflow-y: auto; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
 .topicmap-detail-empty { color: var(--text-muted); font-size: 12.5px; }
 .tm-current-title { font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 2px; }
 .tm-current-meta { color: var(--text-muted); font-size: 11.5px; margin-bottom: 10px; }
