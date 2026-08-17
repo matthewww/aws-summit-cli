@@ -19,6 +19,69 @@ EVENT_DATE = EVENT.get("date", "date TBC")
 EVENT_VENUE = ", ".join(v for v in (EVENT.get("venue"), EVENT.get("location")) if v) or "venue TBC"
 EVENT_AGENDA_URL = EVENT.get("agenda_url", "https://aws.amazon.com/events/summits/johannesburg/")
 
+# Verified official homepages for named speaker organizations (confirmed by web search, not
+# guessed) — keyed by the exact organization string as it appears in the session data. Anything
+# absent here (AUTA, Praesignus — no confidently-verifiable official site found) renders as plain
+# text with no outbound link in the "Companies & institutions" section.
+ORG_LINKS = {
+    "Absa": "https://www.absa.africa/",
+    "Accenture": "https://www.accenture.com/",
+    "Aerobotics PTY LTD": "https://www.aerobotics.com/",
+    "AfriGIS": "https://www.afrigis.co.za/",
+    "Aspen": "https://www.aspenpharma.com/",
+    "BMW": "https://www.bmw.com/",
+    "Capitec": "https://www.capitecbank.co.za/",
+    "Cellulant": "https://www.cellulant.io/",
+    "Clickatell": "https://www.clickatell.com/",
+    "Concierto by Trianz": "https://www.trianz.com/concierto-platform",
+    "Datadog": "https://www.datadoghq.com/",
+    "Deloitte Consulting (Pty) Ltd": "https://www.deloitte.com/za/en.html",
+    "Digital Umuganda": "https://umuganda.digital/",
+    "Discovery Group": "https://www.discovery.co.za/",
+    "Electrum Software": "https://www.electrumsoftware.com/",
+    "Entersekt": "https://www.entersekt.com/",
+    "FirstRand Group": "https://www.firstrand.co.za/",
+    "Kenya Airways": "https://www.kenya-airways.com/",
+    "MFactory (Pty) Ltd": "https://mfactory.mobi/",
+    "Mauritius Telecom": "https://www.telecom.mu/",
+    "MylesTech Solutions LTD": "https://www.mylestechsolutionsllc.com/",
+    "OM Bank": "https://www.oldmutual.co.za/bank",
+    "Old Mutual": "https://www.oldmutual.com/",
+    "Old Mutual Bank": "https://www.oldmutual.co.za/bank",
+    "Old Mutual Group": "https://www.oldmutual.com/",
+    "Palladium Group": "https://thepalladiumgroup.com/",
+    "PayInc": "https://payinc.co.za/",
+    "Peach Payments": "https://www.peachpayments.com/",
+    "Rubrik": "https://www.rubrik.com/",
+    "Shop2Shop": "https://www.shop2shop.co.za/",
+    "Skywalk Innovations": "https://skywalkinnovations.co.za/",
+    "SolarWinds": "https://www.solarwinds.com/",
+    "Standard Bank": "https://www.standardbank.co.za/",
+    "Standard Bank Group": "https://www.standardbank.com/sbg/standard-bank-group",
+    "Tati Software (Pty) Ltd": "https://tati.digital/",
+    "The Unlimited Child": "https://theunlimitedchild.org/",
+    "Trident Steel": "https://tridentsteel.co.za/",
+    "UNISA": "https://www.unisa.ac.za/",
+    "iOCO": "https://www.ioco.tech/",
+    "iOCO Technology Group": "https://www.ioco.tech/",
+}
+ORG_LINKS_JSON = json.dumps(ORG_LINKS)
+
+# One-sentence, verified-by-search facts for the standout organizations — surfaced as callouts
+# above the full org list. Deliberately a short subset, not a fact for every organization.
+ORG_HIGHLIGHTS = {
+    "Cellulant": "Pan-African fintech processing roughly 4.5 million transactions daily, connecting payment services for over 220 million consumers across 35 African countries.",
+    "Clickatell": "Raised a $91 million Series C in 2022 and has processed more than 30 billion chat commerce interactions with a 93% conversation-to-transaction completion rate.",
+    "Digital Umuganda": "Built the world's second-largest open-source voice dataset outside English, contributing over 2,000 hours of Kinyarwanda speech to Mozilla Common Voice.",
+    "Aerobotics PTY LTD": "Raised a $17 million Series B in 2021 to scale its AI-and-drone crop-health analytics platform to farmers across 18 countries.",
+    "Entersekt": "Secures more than 2.5 billion authenticated transactions a year for over 900 banks and 250 million cardholders across roughly 70 countries.",
+    "PayInc": "Became a rare central-bank-owned payments utility when the South African Reserve Bank completed a 50% stake acquisition of the former BankservAfrica in November 2025.",
+    "The Unlimited Child": "Grew from 5 crèches in KwaZulu-Natal into a network of over 3,200 early childhood development centres, training more than 15,000 practitioners and reaching over 2.5 million children.",
+    "Peach Payments": "Raised a $31 million Series A in 2023, its largest round to date, to expand its payments gateway into Kenya and Mauritius.",
+    "Mauritius Telecom": "Its 2017 MARS submarine cable delivered a 500-fold jump in bandwidth to Rodrigues Island, which had previously relied solely on satellite links.",
+}
+ORG_HIGHLIGHTS_JSON = json.dumps(ORG_HIGHLIGHTS)
+
 
 def ns_short(ns):
     return ns.split("#")[-1]
@@ -357,6 +420,26 @@ a.cta { color: var(--series-1); font-size: 12px; }
 .pair-terms span.meta { color: var(--text-muted); font-size: 10.5px; font-weight: 400; }
 .pair-connect { color: var(--text-secondary); }
 
+.org-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.org-highlight { background: var(--chip-bg); border-left: 3px solid var(--series-1); border-radius: 0 7px 7px 0; padding: 8px 11px; }
+.org-highlight-name { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+.org-highlight-fact { font-size: 11.5px; color: var(--text-secondary); line-height: 1.4; }
+
+.org-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
+.org-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px;
+}
+.org-name { font-size: 12.5px; font-weight: 500; }
+.org-name a { color: var(--series-1); text-decoration: none; }
+.org-name a:hover { text-decoration: underline; }
+.org-codes { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.org-code {
+  font-size: 10px; color: var(--text-secondary); background: var(--chip-bg);
+  border-radius: 4px; padding: 2px 5px; white-space: nowrap;
+}
+.org-code-none { font-style: italic; color: var(--text-muted); }
+
 #chart-topicmap { min-height: 320px; }
 .topicmap-table-scroll { max-height: 320px; overflow-y: auto; }
 .topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
@@ -474,6 +557,12 @@ a.cta { color: var(--series-1); font-size: 12px; }
     </div>
     <div id="tab-list"><div class="session-list" id="session-list"></div></div>
     <div id="tab-timeline" style="display:none"><div id="timeline"></div></div>
+  </div>
+
+  <div class="section card">
+    <h2>Companies &amp; institutions <span style="font-weight:400;color:var(--text-muted)">— every named speaker organization, linked where verified, with their talk codes</span></h2>
+    <div class="org-highlights" id="org-highlights"></div>
+    <div class="org-grid" id="org-list"></div>
   </div>
   </div>
 </div>
@@ -604,6 +693,42 @@ function renderEmerging() {
   document.getElementById("emerging").innerHTML = emerging.map(({ w, f }) =>
     `<div class="pair-card"><div class="pair-terms"><span>${w}</span><span class="meta">${f}×</span></div></div>`
   ).join("");
+}
+
+// Verified official homepage for named speaker organizations — deliberately not AI-guessed;
+// each URL was confirmed by web search. Anything not in here renders as plain text, no link.
+const ORG_LINKS = __ORG_LINKS_JSON__;
+// One-sentence, verified-by-search facts for a handful of standout organizations — not every org gets one.
+const ORG_HIGHLIGHTS = __ORG_HIGHLIGHTS_JSON__;
+const ORG_EXCLUDE = new Set(["aws", "aws community builders", "aws heroes", "aws user groups", "freelance trainer"]);
+
+function renderOrgs() {
+  const byOrg = new Map();
+  rows.forEach(r => {
+    (r.speakers || "").split(",").forEach(part => {
+      const name = part.trim();
+      if (!name || ORG_EXCLUDE.has(name.toLowerCase())) return;
+      if (!byOrg.has(name)) byOrg.set(name, new Set());
+      if (r.code) byOrg.get(name).add(r.code);
+    });
+  });
+
+  const highlights = Object.keys(ORG_HIGHLIGHTS).filter(name => byOrg.has(name));
+  document.getElementById("org-highlights").innerHTML = highlights.map(name => {
+    const url = ORG_LINKS[name];
+    const label = url ? `<a href="${url}" target="_blank" rel="noopener">${name} ↗</a>` : name;
+    return `<div class="org-highlight"><div class="org-highlight-name">${label}</div><div class="org-highlight-fact">${ORG_HIGHLIGHTS[name]}</div></div>`;
+  }).join("");
+
+  const orgs = [...byOrg.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  document.getElementById("org-list").innerHTML = orgs.map(([name, codes]) => {
+    const url = ORG_LINKS[name];
+    const label = url
+      ? `<a href="${url}" target="_blank" rel="noopener">${name} ↗</a>`
+      : name;
+    const codeBadges = [...codes].sort().map(c => `<span class="org-code">${c}</span>`).join("");
+    return `<div class="org-row"><div class="org-name">${label}</div><div class="org-codes">${codeBadges || "<span class=\"org-code org-code-none\">no talk code</span>"}</div></div>`;
+  }).join("");
 }
 
 // Topic map: a 2D PCA projection of each session's tag vector (areas + topics + products) —
@@ -806,6 +931,7 @@ function renderTopicMap() {
 renderFunFacts();
 renderCloud();
 renderEmerging();
+renderOrgs();
 
 let STAR = new Set();
 try { STAR = new Set(JSON.parse(localStorage.getItem("jhb-summit-starred") || "[]")); } catch (e) {}
@@ -1073,6 +1199,8 @@ render();
 
 HTML = (HTML
     .replace("__DATA_JSON__", DATA_JSON)
+    .replace("__ORG_LINKS_JSON__", ORG_LINKS_JSON)
+    .replace("__ORG_HIGHLIGHTS_JSON__", ORG_HIGHLIGHTS_JSON)
     .replace("__EVENT_TITLE__", EVENT_TITLE)
     .replace("__EVENT_DATE__", EVENT_DATE)
     .replace("__EVENT_VENUE__", EVENT_VENUE)
