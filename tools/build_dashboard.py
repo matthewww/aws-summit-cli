@@ -109,6 +109,9 @@ HTML = r"""<!doctype html>
   --critical:       #d03b3b;
   --good:           #0ca30c;
   --chip-bg:        #f0efec;
+  --intro-bg:       color-mix(in srgb, var(--series-1) 14%, var(--page));
+  --intro-border:   color-mix(in srgb, var(--series-1) 30%, var(--border));
+  --intro-hair:     color-mix(in srgb, var(--series-1) 30%, var(--border));
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) .viz-root {
@@ -154,7 +157,11 @@ HTML = r"""<!doctype html>
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; }
+body { margin: 0; background: #f9f9f7; }
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) body { background: #0d0d0d; }
+}
+:root[data-theme="dark"] body { background: #0d0d0d; }
 .viz-root {
   background: var(--page);
   color: var(--text-primary);
@@ -165,7 +172,6 @@ body { margin: 0; }
 }
 h1 { font-size: 22px; margin: 0 0 2px; }
 h2 { font-size: 15px; margin: 0 0 12px; color: var(--text-primary); }
-.subtitle { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 20px; }
 .card {
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -241,6 +247,45 @@ table.mini td, table.mini th { padding: 3px 6px; text-align: left; border-bottom
 table.mini th { color: var(--text-muted); font-weight: 500; }
 
 .section { margin-bottom: 20px; }
+
+/* ---- Intro block: a narrative cover for the agenda, distinct from the tool below ---- */
+.page-block-intro {
+  background: var(--intro-bg);
+  border: 1px solid var(--intro-border);
+  border-radius: 22px;
+  padding: 42px 44px 48px;
+  margin: -4px -4px 28px;
+}
+.page-block-intro .section { margin-bottom: 40px; }
+.page-block-intro .section:last-child { margin-bottom: 0; }
+.page-block-intro .section.card { background: transparent; border: none; border-radius: 0; padding: 0; }
+.intro-kicker {
+  font: 600 11px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--series-1); margin: 0 0 16px;
+}
+.page-block-intro h1 {
+  font-family: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  font-size: 36px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15;
+  text-wrap: balance; margin: 0 0 16px;
+}
+.page-block-intro .lede {
+  font-family: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  font-size: 18px; font-style: italic; line-height: 1.55; color: var(--text-secondary);
+  max-width: 62ch; margin: 0 0 16px;
+}
+.page-block-intro .intro-meta { font-size: 13px; color: var(--text-muted); margin: 0 0 8px; }
+.page-block-intro h2 {
+  font-family: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  font-size: 21px; font-weight: 600;
+}
+.page-block-intro .stats-row { margin: 6px 0 38px; }
+.page-block-intro .stat-tile {
+  background: transparent; border: none; border-left: 1px solid var(--intro-hair);
+  border-radius: 0; padding: 2px 0 2px 18px;
+}
+.page-block-intro .stat-value { font-family: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif; }
+
+.page-block-explore { margin-top: 4px; }
 
 .agenda-card { border-left: 3px solid var(--series-1); }
 .agenda-empty { color: var(--text-muted); font-size: 13px; }
@@ -342,10 +387,13 @@ a.cta { color: var(--series-1); font-size: 12px; }
 </head>
 <body>
 <div class="viz-root" id="root">
+  <div class="page-block page-block-intro">
   <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
     <div>
-      <h1>__EVENT_TITLE__ — Session Explorer</h1>
-      <p class="subtitle">__EVENT_DATE__ · __EVENT_VENUE__ · all times CAT (UTC+2) · <a href="__EVENT_AGENDA_URL__" target="_blank" rel="noopener" style="color:var(--series-1)">Official event page ↗</a></p>
+      <div class="intro-kicker">Session Explorer</div>
+      <h1>__EVENT_TITLE__</h1>
+      <p class="lede">__EVENT_DATE__ brings a full day of parallel tracks to __EVENT_VENUE__, with agentic AI running through nearly everything on the agenda. This page decodes what's actually being said, then helps you build a day out of it.</p>
+      <p class="intro-meta">All times CAT (UTC+2) · <a href="__EVENT_AGENDA_URL__" target="_blank" rel="noopener" style="color:var(--series-1)">Official event page ↗</a></p>
     </div>
     <button class="table-toggle" id="theme-toggle" style="flex:0 0 auto;">🌙 Dark</button>
   </div>
@@ -381,6 +429,13 @@ a.cta { color: var(--series-1); font-size: 12px; }
     <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
     <div id="chart-topicmap"></div>
   </div>
+  </div>
+
+  <div class="page-block page-block-explore">
+  <div class="section card agenda-card">
+    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
+    <div id="agenda"></div>
+  </div>
 
   <div class="card filter-row">
     <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
@@ -389,11 +444,6 @@ a.cta { color: var(--series-1); font-size: 12px; }
     <select id="f-area"><option value="">All areas of interest</option></select>
     <span class="filter-count" id="f-count"></span>
     <button class="filter-reset" id="f-reset">Reset filters</button>
-  </div>
-
-  <div class="section card agenda-card">
-    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
-    <div id="agenda"></div>
   </div>
 
   <div class="section">
@@ -424,6 +474,7 @@ a.cta { color: var(--series-1); font-size: 12px; }
     </div>
     <div id="tab-list"><div class="session-list" id="session-list"></div></div>
     <div id="tab-timeline" style="display:none"><div id="timeline"></div></div>
+  </div>
   </div>
 </div>
 
