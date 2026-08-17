@@ -65,8 +65,13 @@ def fetch_sessions(event, out_path=None, on_progress=None):
                 f.write(json.dumps(item) + '\n')
 
     event_meta_path = os.path.join(os.path.dirname(out_path), "event.json")
+    existing_meta = {}
+    if os.path.exists(event_meta_path):
+        with open(event_meta_path) as f:
+            existing_meta = json.load(f)
     with open(event_meta_path, 'w') as f:
         json.dump({
+            **existing_meta,
             'title': event['title'],
             'date': event['date'],
             'location': event['location'],
