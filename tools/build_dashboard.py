@@ -312,11 +312,11 @@ a.cta { color: var(--series-1); font-size: 12px; }
 .pair-terms span.meta { color: var(--text-muted); font-size: 10.5px; font-weight: 400; }
 .pair-connect { color: var(--text-secondary); }
 
-#chart-topicmap { min-height: 450px; }
-.topicmap-table-scroll { max-height: 450px; overflow-y: auto; }
+#chart-topicmap { min-height: 320px; }
+.topicmap-table-scroll { max-height: 320px; overflow-y: auto; }
 .topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.topicmap-svg-col { flex: 1 1 420px; min-width: 320px; }
-.topicmap-detail { flex: 1 1 220px; min-width: 200px; height: 450px; overflow-y: auto; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.topicmap-svg-col { flex: 1 1 380px; min-width: 300px; }
+.topicmap-detail { flex: 1 1 220px; min-width: 200px; height: 320px; overflow-y: auto; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
 .topicmap-detail-empty { color: var(--text-muted); font-size: 12.5px; }
 .tm-current-title { font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 2px; }
 .tm-current-meta { color: var(--text-muted); font-size: 11.5px; margin-bottom: 10px; }
@@ -525,16 +525,15 @@ function renderCloud() {
   rows.forEach(r => tokenize(r.title + " " + r.abstract).forEach(w => freq.set(w, (freq.get(w) || 0) + 1)));
   const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 28);
   const maxF = top[0][1], minF = top[top.length - 1][1];
-  const scaled = top.map(([w, f], i) => ({
-    w, f, i,
-    size: 10.5 + (maxF === minF ? 4 : (f - minF) / (maxF - minF) * 14),
-  }));
+  const scaled = top.map(([w, f]) => {
+    const t = maxF === minF ? 1 : (f - minF) / (maxF - minF);
+    return { w, f, t, size: 10.5 + t * 14 };
+  });
   // shuffle deterministically for an organic layout, seeded by word so it's stable across renders
   scaled.sort((a, b) => (a.w.charCodeAt(0) + a.w.length) - (b.w.charCodeAt(0) + b.w.length));
-  document.getElementById("cloud").innerHTML = scaled.map(({ w, f, i, size }) => {
-    const emphasize = i < 3;
-    const color = emphasize ? "var(--series-1)" : "var(--text-secondary)";
-    const weight = emphasize ? 700 : 400;
+  document.getElementById("cloud").innerHTML = scaled.map(({ w, f, t, size }) => {
+    const color = `color-mix(in srgb, var(--series-1) ${(15 + t * 80).toFixed(0)}%, var(--text-secondary))`;
+    const weight = 400 + Math.round(t * 300);
     return `<span class="cloud-word" style="font-size:${size.toFixed(0)}px;color:${color};font-weight:${weight}" title="${w}: ${f} mentions">${w}</span>`;
   }).join("");
 }
@@ -628,7 +627,7 @@ function renderTopicMap() {
   const coords = pca2(vectors);
   const xs = coords.map(c => c[0]), ys = coords.map(c => c[1]);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const W = 720, H = 420, PAD = 26;
+  const W = 480, H = 280, PAD = 18;
   const sx = x => PAD + (maxX === minX ? 0.5 : (x - minX) / (maxX - minX)) * (W - 2 * PAD);
   const sy = y => PAD + (maxY === minY ? 0.5 : (y - minY) / (maxY - minY)) * (H - 2 * PAD);
   const px = coords.map(c => sx(c[0])), py = coords.map(c => sy(c[1]));
@@ -651,13 +650,13 @@ function renderTopicMap() {
     }
     return [...groups.values()].filter(g => g.length >= minPts);
   }
-  const clusters = clusterGroups(40, 4);
+  const clusters = clusterGroups(27, 4);
   const clusterCircles = clusters.map(idxs => {
     const cx = idxs.reduce((s, i) => s + px[i], 0) / idxs.length;
     const cy = idxs.reduce((s, i) => s + py[i], 0) / idxs.length;
     // 80th-percentile distance rather than max, so one chained-in outlier can't balloon the circle.
     const dists = idxs.map(i => Math.hypot(px[i] - cx, py[i] - cy)).sort((a, b) => a - b);
-    const r = dists[Math.floor(0.8 * (dists.length - 1))] + 12;
+    const r = dists[Math.floor(0.8 * (dists.length - 1))] + 8;
     return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="var(--series-1)" fill-opacity="0.07" stroke="var(--series-1)" stroke-opacity="0.35" stroke-dasharray="3 3"/>`;
   }).join("");
   const dotOffset = clusters.length;
@@ -676,7 +675,7 @@ function renderTopicMap() {
   el.innerHTML = `
     <div class="topicmap-wrap">
       <div class="topicmap-svg-col">
-        <svg id="topicmap-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:720px;display:block;cursor:crosshair">${clusterCircles}${dots}</svg>
+        <svg id="topicmap-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:480px;display:block;cursor:crosshair">${clusterCircles}${dots}</svg>
         <div class="legend">${legend}</div>
       </div>
       <div class="topicmap-detail" id="topicmap-detail">
