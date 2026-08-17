@@ -21,20 +21,10 @@ python -m venv venv
 Arrow-key select an event from the live list; sessions are written to
 `data/<event-slug>/sessions.jsonl`. Loops back to the picker after each fetch.
 
-## These are my current picks (to be updated tonight 17/8)
+## Current picks (to be updated 17/8 cos the data's changed.)
 
 Same lens as last year's [2025 picks](https://github.com/matthewww/aws-summit-sessions-jnb-2025)
 — architecture, ML/GenAI depth over intro-level, customer-led case studies, "at scale" over theory
-
-**GenAI / ML depth**
-- *Building Multi-Tenant RAG and MCP Servers* (ARC301, Chalk talk, 13:30) —
-  architecture-heavy, audience-driven Q&A on production RAG/MCP infrastructure
-  rather than a service tour.
-- *A practitioner's guide to data for agentic AI* (ANT303, Chalk talk, 13:30) —
-  the data layer underneath agentic AI, the unglamorous part that actually
-  determines whether it works.
-- *SageMaker & MLflow: Innovate faster with no infrastructure management*
-  (AIM308, Breakout session, 12:30) — practical MLOps, not a feature list.
 
 **Architecture & scale**
 - *Migrating 600K RPS: How Booking.com modernized accommodation search*
@@ -55,11 +45,18 @@ Same lens as last year's [2025 picks](https://github.com/matthewww/aws-summit-se
 - *How Peach Payments built a scalable payments engine on AWS* (CMP304,
   Breakout session, 15:30)
 
+**GenAI / ML depth**
+- *Building Multi-Tenant RAG and MCP Servers* (ARC301, Chalk talk, 13:30) —
+  architecture-heavy, audience-driven Q&A on production RAG/MCP infrastructure
+  rather than a service tour.
+- *A practitioner's guide to data for agentic AI* (ANT303, Chalk talk, 13:30) —
+  the data layer underneath agentic AI, the unglamorous part that actually
+  determines whether it works.
+- *SageMaker & MLflow: Innovate faster with no infrastructure management*
+  (AIM308, Breakout session, 12:30) — practical MLOps, not a feature list.
+
 **Hidden gem**
 - *Securing Agentic AI: OWASP, MAESTRO, and Real-World Defense Strategies*
   (SEC301, Chalk talk, 14:30) — 2025's hidden gem asked what happens when an
   AI is the user of your system; this is the security answer nobody's agenda
   has caught up to yet.
-
-If short on time: prioritize the customer-led sessions and anything with
-"at scale" or "well-architected" in the title.
