@@ -207,11 +207,17 @@ h2 { font-size: 15px; margin: 0 0 12px; color: var(--text-primary); }
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   margin-bottom: 20px;
 }
-@media (max-width: 720px) { .charts-grid { grid-template-columns: 1fr; } }
+.charts-grid .card { padding: 12px 14px; }
+.charts-grid h2 { font-size: 12.5px; margin-bottom: 8px; }
+.charts-grid .hbar-label { flex-basis: 78px; font-size: 10.5px; }
+.charts-grid .hbar-value { flex-basis: 16px; font-size: 10px; }
+.charts-grid .hbar-row { margin: 3px 0; gap: 5px; }
+@media (max-width: 900px) { .charts-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .charts-grid { grid-template-columns: 1fr; } }
 
 .chart-head { display: flex; align-items: baseline; justify-content: space-between; }
 .table-toggle {
@@ -306,9 +312,10 @@ a.cta { color: var(--series-1); font-size: 12px; }
 .pair-terms span.meta { color: var(--text-muted); font-size: 10.5px; font-weight: 400; }
 .pair-connect { color: var(--text-secondary); }
 
+#chart-topicmap { min-height: 450px; }
 .topicmap-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.topicmap-svg-col { flex: 1 1 320px; min-width: 260px; }
-.topicmap-detail { flex: 1 1 220px; min-width: 200px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.topicmap-svg-col { flex: 1 1 420px; min-width: 320px; }
+.topicmap-detail { flex: 1 1 220px; min-width: 200px; min-height: 450px; background: var(--chip-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
 .topicmap-detail-empty { color: var(--text-muted); font-size: 12.5px; }
 .tm-current-title { font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 2px; }
 .tm-current-meta { color: var(--text-muted); font-size: 11.5px; margin-bottom: 10px; }
@@ -369,25 +376,6 @@ a.cta { color: var(--series-1); font-size: 12px; }
     </div>
   </div>
 
-  <div class="section card">
-    <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
-    <div id="chart-topicmap"></div>
-  </div>
-
-  <div class="card filter-row">
-    <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
-    <select id="f-level"><option value="">All levels</option></select>
-    <select id="f-type"><option value="">All session types</option></select>
-    <select id="f-area"><option value="">All areas of interest</option></select>
-    <span class="filter-count" id="f-count"></span>
-    <button class="filter-reset" id="f-reset">Reset filters</button>
-  </div>
-
-  <div class="section card agenda-card">
-    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
-    <div id="agenda"></div>
-  </div>
-
   <div class="section">
     <div class="charts-grid">
       <div class="card">
@@ -407,6 +395,25 @@ a.cta { color: var(--series-1); font-size: 12px; }
         <div id="chart-product"></div>
       </div>
     </div>
+  </div>
+
+  <div class="section card">
+    <div class="chart-head"><h2>Topic map <span style="font-weight:400;color:var(--text-muted)">— sessions positioned by shared tags; closer dots share more themes</span></h2><button class="table-toggle" data-target="chart-topicmap">Table</button></div>
+    <div id="chart-topicmap"></div>
+  </div>
+
+  <div class="card filter-row">
+    <input type="text" id="f-search" placeholder="Search title, speaker, abstract, tags, products…">
+    <select id="f-level"><option value="">All levels</option></select>
+    <select id="f-type"><option value="">All session types</option></select>
+    <select id="f-area"><option value="">All areas of interest</option></select>
+    <span class="filter-count" id="f-count"></span>
+    <button class="filter-reset" id="f-reset">Reset filters</button>
+  </div>
+
+  <div class="section card agenda-card">
+    <h2>My Agenda <span style="font-weight:400;color:var(--text-muted)">— star sessions below to build your day</span></h2>
+    <div id="agenda"></div>
   </div>
 
   <div class="section card">
@@ -620,15 +627,43 @@ function renderTopicMap() {
   const coords = pca2(vectors);
   const xs = coords.map(c => c[0]), ys = coords.map(c => c[1]);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const W = 480, H = 280, PAD = 18;
+  const W = 720, H = 420, PAD = 26;
   const sx = x => PAD + (maxX === minX ? 0.5 : (x - minX) / (maxX - minX)) * (W - 2 * PAD);
   const sy = y => PAD + (maxY === minY ? 0.5 : (y - minY) / (maxY - minY)) * (H - 2 * PAD);
+  const px = coords.map(c => sx(c[0])), py = coords.map(c => sy(c[1]));
+  const DOT_R = 7;
+
+  // Denser groups: union-find on pixel-space proximity, circled when a cluster has enough members.
+  function clusterGroups(eps, minPts) {
+    const n = px.length;
+    const parent = Array.from({ length: n }, (_, i) => i);
+    const find = x => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const dx = px[i] - px[j], dy = py[i] - py[j];
+      if (dx * dx + dy * dy <= eps * eps) { const a = find(i), b = find(j); if (a !== b) parent[a] = b; }
+    }
+    const groups = new Map();
+    for (let i = 0; i < n; i++) {
+      const r = find(i);
+      if (!groups.has(r)) groups.set(r, []);
+      groups.get(r).push(i);
+    }
+    return [...groups.values()].filter(g => g.length >= minPts);
+  }
+  const clusters = clusterGroups(65, 4);
+  const clusterCircles = clusters.map(idxs => {
+    const cx = idxs.reduce((s, i) => s + px[i], 0) / idxs.length;
+    const cy = idxs.reduce((s, i) => s + py[i], 0) / idxs.length;
+    const r = Math.max(...idxs.map(i => Math.hypot(px[i] - cx, py[i] - cy))) + 15;
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="var(--series-1)" fill-opacity="0.07" stroke="var(--series-1)" stroke-opacity="0.35" stroke-dasharray="3 3"/>`;
+  }).join("");
+  const dotOffset = clusters.length;
 
   const dots = rows.map((r, i) => {
-    const cx = sx(coords[i][0]).toFixed(1), cy = sy(coords[i][1]).toFixed(1);
+    const cx = px[i].toFixed(1), cy = py[i].toFixed(1);
     const color = LEVEL_COLOR[r.levelCode] || "var(--text-muted)";
     const title = `${r.title} (${r.code}) — Level ${r.levelCode || "unspecified"}`;
-    return `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" fill-opacity="0.85" stroke="var(--surface-1)" stroke-width="1.2"><title>${title}</title></circle>`;
+    return `<circle cx="${cx}" cy="${cy}" r="${DOT_R}" fill="${color}" fill-opacity="0.65" stroke="var(--surface-1)" stroke-width="1.2"><title>${title}</title></circle>`;
   }).join("");
 
   const legend = LEVEL_ORDER.filter(c => rows.some(r => r.levelCode === c)).map(c =>
@@ -638,7 +673,7 @@ function renderTopicMap() {
   el.innerHTML = `
     <div class="topicmap-wrap">
       <div class="topicmap-svg-col">
-        <svg id="topicmap-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:520px;display:block;cursor:crosshair">${dots}</svg>
+        <svg id="topicmap-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:720px;display:block;cursor:crosshair">${clusterCircles}${dots}</svg>
         <div class="legend">${legend}</div>
       </div>
       <div class="topicmap-detail" id="topicmap-detail">
@@ -651,13 +686,13 @@ function renderTopicMap() {
   let highlighted = -1;
 
   function setHighlight(idx) {
-    if (highlighted >= 0 && svgEl.children[highlighted]) {
-      svgEl.children[highlighted].setAttribute("r", "5");
-      svgEl.children[highlighted].setAttribute("stroke-width", "1.2");
+    if (highlighted >= 0 && svgEl.children[dotOffset + highlighted]) {
+      svgEl.children[dotOffset + highlighted].setAttribute("r", DOT_R);
+      svgEl.children[dotOffset + highlighted].setAttribute("stroke-width", "1.2");
     }
-    if (idx >= 0 && svgEl.children[idx]) {
-      svgEl.children[idx].setAttribute("r", "8");
-      svgEl.children[idx].setAttribute("stroke-width", "2");
+    if (idx >= 0 && svgEl.children[dotOffset + idx]) {
+      svgEl.children[dotOffset + idx].setAttribute("r", DOT_R + 3);
+      svgEl.children[dotOffset + idx].setAttribute("stroke-width", "2");
     }
     highlighted = idx;
   }
@@ -776,7 +811,7 @@ const chartState = { level: "chart", type: "chart", area: "chart", product: "cha
 
 function renderCharts(filtered) {
   const byLevel = countBy(filtered, r => r.levelCode || "?");
-  const levelPairs = LEVEL_ORDER.filter(c => byLevel.has(c)).map(c => {
+  const levelPairs = LEVEL_ORDER.filter(c => byLevel.has(c) && byLevel.get(c) > 1).map(c => {
     const label = (rows.find(r => r.levelCode === c) || {}).levelLabel || c;
     return [c + " · " + label, byLevel.get(c)];
   });
@@ -788,20 +823,20 @@ function renderCharts(filtered) {
   }
 
   const byType = countBy(filtered, r => r.type || "Unspecified");
-  const typePairs = [...byType.entries()].sort((a, b) => b[1] - a[1]);
+  const typePairs = [...byType.entries()].filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]);
   const typeEl = document.getElementById("chart-type");
   typeEl.innerHTML = "";
   if (chartState.type === "chart") hbarChart(typeEl, typePairs);
   else typeEl.innerHTML = tableTwin(typePairs, ["Format", "Sessions"]);
 
   const byArea = countBy(filtered, r => r.areas);
-  const areaPairs = [...byArea.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const areaPairs = [...byArea.entries()].filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const areaEl = document.getElementById("chart-area");
   if (chartState.area === "chart") hbarChart(areaEl, areaPairs);
   else areaEl.innerHTML = tableTwin(areaPairs, ["Area of interest", "Sessions"]);
 
   const byProduct = countBy(filtered, r => r.products);
-  const productPairs = [...byProduct.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const productPairs = [...byProduct.entries()].filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const productEl = document.getElementById("chart-product");
   if (chartState.product === "chart") hbarChart(productEl, productPairs);
   else productEl.innerHTML = tableTwin(productPairs, ["Product/service", "Mentions"]);
