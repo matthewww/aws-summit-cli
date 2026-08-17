@@ -12,7 +12,7 @@ python -m venv venv
 ./venv/bin/python -m pip install -r requirements.txt           # macOS/Linux
 ```
 
-## Usage
+### Usage
 
 ```
 ./venv/Scripts/python.exe cli.py
@@ -21,25 +21,10 @@ python -m venv venv
 Arrow-key select an event from the live list; sessions are written to
 `data/<event-slug>/sessions.jsonl`. Loops back to the picker after each fetch.
 
-## How it works
-
-- `events.py` — pages AWS's summit-listing API
-  (`events-cards-interactive-summits-cards-interactive-events-summits-hub`)
-  to build the picker list.
-- `aws_agenda.py` — for the chosen event, scrapes its agenda page for the
-  event-specific `directoryId` AWS embeds in the HTML (there's no shared/stable
-  agenda directory across events), then pages `/api/dirs/items/search` against
-  it.
-
-Some events render their agenda widget fully client-side with nothing
-embedded server-side to scrape — those are reported as "undiscoverable"
-rather than silently treated as having no sessions.
-
-## Appendix: based on my interests, these are my current picks
+## These are my current picks (to be updated tonight 17/8)
 
 Same lens as last year's [2025 picks](https://github.com/matthewww/aws-summit-sessions-jnb-2025)
-— architecture, ML/GenAI depth over intro-level, customer-led case studies,
-"at scale" over theory — applied to the 2026 Johannesburg agenda.
+— architecture, ML/GenAI depth over intro-level, customer-led case studies, "at scale" over theory
 
 **GenAI / ML depth**
 - *Building Multi-Tenant RAG and MCP Servers* (ARC301, Chalk talk, 13:30) —
